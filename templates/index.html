@@ -1,27 +1,128 @@
 <!DOCTYPE html>
-<html>
+<html lang="da">
 <head>
-    <title>Slideshow</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPI Signage</title>
 
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    body{
-        margin:0;
-        background:black;
-    }
+        body {
+            background: black;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
 
-    img{
-        width:100vw;
-        height:100vh;
-        object-fit:cover;
-    }
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            display: none;
+        }
 
+        .active {
+            display: block;
+        }
+
+        .sidebar {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
+        }
+
+        #time {
+            font-size: 48px;
+            font-weight: bold;
+        }
+
+        #date {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .empty {
+            color: white;
+            text-align: center;
+            margin-top: 100px;
+            font-size: 30px;
+        }
     </style>
-
 </head>
 <body>
 
-/uploads/monday/billede1.jpg
+<div class="sidebar">
+    <div id="date"></div>
+    <div id="time"></div>
+</div>
+
+{% if images %}
+    {% for image in images %}
+        <!-- RETTELSE: Tilføjet <img> tag med klassen 'slide' -->
+        <img src="/uploads/{{ image }}" class="slide" alt="Signage billede">
+    {% endfor %}
+{% else %}
+    <div class="empty">
+        Ingen billeder uploadet endnu
+    </div>
+{% endif %}
+
+<script>
+// Sørg for at siden genstarter en gang i døgnet (kl. 04:00) for at frigøre hukommelse
+setInterval(() => {
+    const nu = new Date();
+    if (nu.getHours() === 4 && nu.getMinutes() === 0) {
+        location.reload(true); // Tvinger genindlæsning uden cache
+    }
+}, 60000);
+
+const slides = document.querySelectorAll(".slide");
+let current = 0;
+
+if (slides.length > 0) {
+    // RETTELSE: Husk [0] så det første billede rent faktisk vises
+    slides[0].classList.add("active");
+
+    setInterval(() => {
+        slides[current].classList.remove("active");
+        current = (current + 1) % slides.length;
+        slides[current].classList.add("active");
+    }, 5000); // Skifter billede hvert 5. sekund
+}
+
+function updateClock() {
+    const now = new Date();
+
+    document.getElementById("time").innerText =
+        now.toLocaleTimeString("da-DK", {
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+
+    document.getElementById("date").innerText =
+        now.toLocaleDateString("da-DK", {
+            weekday: "long",
+            day: "numeric",
+            month: "long"
+        });
+}
+
+// Start uret og opdater hvert sekund
+updateClock();
+setInterval(updateClock, 1000);
+</script>
 
 </body>
 </html>

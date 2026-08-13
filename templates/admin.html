@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin</title>
+</head>
+<body>
+
+<h1>Upload billede</h1>
+
+<form method="POST" enctype="multipart/form-data">
+
+    <input type="file" name="file">
+
+    <button type="submit">
+        Upload
+    </button>
+
+</form>
+
+<h2>Uploadede filer</h2>
+
+<ul>
+{% for file in files %}
+    <li>{{ file }}</li>
+{% endfor %}
+</ul>
+
+</body>
+</html>
