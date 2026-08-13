@@ -3,8 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>Infoskærm - Live</title>
+    
+    <!-- RETTELSE: Stopper favicon-fejlen -->
+    <link rel="icon" href="data:,">
+    
+    <!-- VIGTIGT: Dette link SKAL være der, for at browseren kan tegne ikonet -->
+    <link rel="stylesheet" href="https://jsdelivr.net">
+    
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
 
     <!-- 1. VENSTRE SIDE: Billeder og videoer -->
@@ -32,9 +40,17 @@
         </div>
         
         <div class="weather-section">
-            <h3>Vejret på {{ by }}</h3>
-            <div id="weather-temp">{{ temp }}</div>
-            <div id="weather-desc">{{ beskrivelse }}</div>
+            <h3>Vejret i dag</h3>
+    
+            <!-- Stor ikon-visning -->
+            <div style="font-size: 54px; color: #facc15; margin-bottom: 5px;">
+                <i class="bi {{ ikon }}"></i>
+            </div>
+        <div id="weather-temp">{{ temp }}</div>
+    <div id="weather-desc">{{ beskrivelse }}</div>
+</div>
+
+
         </div>
     </div>
 
@@ -52,89 +68,116 @@
         </div>
     </div>
 
-    <script>
-        let slides = document.querySelectorAll(".slide");
-        let current = 0;
-        let slideshowInterval;
-        let nuvaerendeMedier = [];
+<script>
+    let slides = document.querySelectorAll(".slide");
+    let current = 0;
+    let slideshowTimeout;
+    let nuvaerendeMedier = [];
+    
+    // Hent standard sekunder fra Flask ved opstart, lav det om til millisekunder (f.eks. 12 * 1000 = 12000)
+    let billedMillisekunder = {{ sekunder }} * 1000; 
 
-        function startSlideshow() {
-            clearInterval(slideshowInterval);
-            slides = document.querySelectorAll(".slide");
-            if (slides.length > 1) {
-                slideshowInterval = setInterval(() => {
-                    if(slides[current].tagName === "VIDEO") slides[current].pause();
-                    slides[current].classList.remove("active");
-                    current = (current + 1) % slides.length;
-                    slides[current].classList.add("active");
-                    if(slides[current].tagName === "VIDEO") { slides[current].currentTime = 0; slides[current].play(); }
-                }, 8000);
+    function koerSlideshow() {
+        clearTimeout(slideshowTimeout);
+        slides = document.querySelectorAll(".slide");
+        
+        if (slides.length <= 1) return;
+
+        const aktivtMedie = slides[current];
+
+        if (aktivtMedie.tagName === "VIDEO") {
+            aktivtMedie.currentTime = 0;
+            aktivtMedie.play();
+            aktivtMedie.onended = () => { skiftMedie(); };
+        } else {
+            // Bruger det dynamiske tal fra databasen nu!
+            slideshowTimeout = setTimeout(() => {
+                skiftMedie();
+            }, billedMillisekunder);
+        }
+    }
+
+    function skiftMedie() {
+        if (slides[current].tagName === "VIDEO") {
+            slides[current].pause();
+            slides[current].onended = null;
+        }
+        slides[current].classList.remove("active");
+        current = (current + 1) % slides.length;
+        slides[current].classList.add("active");
+        koerSlideshow();
+    }
+
+    async function tjekEfterNyeMedier() {
+        try {
+            const response = await fetch('/hent-aktive-medier');
+            const data = await response.json();
+            
+            // Opdater dynamisk sekunderne hvis du har ændret det i admin panelet
+            if (data.sekunder) {
+                billedMillisekunder = data.sekunder * 1000;
             }
-        }
-
-        async function tjekEfterNyeMedier() {
-            try {
-                const response = await fetch('/hent-aktive-medier');
-                const data = await response.json();
-                if (JSON.stringify(data.medier) !== JSON.stringify(nuvaerendeMedier)) {
-                    nuvaerendeMedier = data.medier;
-                    const container = document.querySelector(".media-container");
-                    container.innerHTML = "";
-                    current = 0;
-                    if (data.medier.length > 0) {
-                        data.medier.forEach((filnavn, index) => {
-                            const erVideo = filnavn.endsWith('.mp4') || filnavn.endsWith('.webm');
-                            let element = erVideo ? document.createElement("video") : document.createElement("img");
-                            element.src = `/uploads/${filnavn}`;
-                            if (erVideo) { element.autoplay = true; element.loop = true; element.muted = true; }
-                            element.className = "slide";
-                            if (index === 0) element.classList.add("active");
-                            container.appendChild(element);
-                        });
-                        startSlideshow();
-                    } else {
-                        container.innerHTML = `<div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:30px; color: white;">Ingen aktive medier.</div>`;
-                        clearInterval(slideshowInterval);
-                    }
-                }
-            } catch (error) { console.error(error); }
-        }
-
-        async function reloadTickerNews() {
-            try {
-                const response = await fetch('/hent-nyheder');
-                const data = await response.json();
-                const tickerContainer = document.querySelector(".ticker");
-                if (data.nyheder && data.nyheder.length > 0) {
-                    tickerContainer.innerHTML = "";
-                    data.nyheder.forEach(tekst => {
-                        const div = document.createElement("div");
-                        div.className = "ticker-item";
-                        div.innerText = tekst;
-                        tickerContainer.appendChild(div);
+            
+            if (JSON.stringify(data.medier) !== JSON.stringify(nuvaerendeMedier)) {
+                nuvaerendeMedier = data.medier;
+                const container = document.querySelector(".media-container");
+                
+                clearTimeout(slideshowTimeout);
+                if (slides[current] && slides[current].tagName === "VIDEO") slides[current].pause();
+                
+                container.innerHTML = "";
+                current = 0;
+                
+                if (data.medier.length > 0) {
+                    data.medier.forEach((filnavn, index) => {
+                        const erVideo = filnavn.endsWith('.mp4') || filnavn.endsWith('.webm');
+                        let element = erVideo ? document.createElement("video") : document.createElement("img");
+                        element.src = `/uploads/${filnavn}`;
+                        if (erVideo) { element.autoplay = true; element.muted = true; element.playsInline = true; }
+                        element.className = "slide";
+                        if (index === 0) element.classList.add("active");
+                        container.appendChild(element);
                     });
+                    koerSlideshow();
+                } else {
+                    container.innerHTML = `<div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:30px; color: white;">Ingen aktive medier.</div>`;
+                    clearTimeout(slideshowTimeout);
                 }
-            } catch (error) { console.error(error); }
-        }
+            }
+        } catch (error) { console.error(error); }
+    }
 
-        function updateClock() {
-            const now = new Date();
-            document.getElementById("time").innerText = now.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
-            let dateStr = now.toLocaleDateString("da-DK", { weekday: "short", day: "numeric", month: "short" });
-            document.getElementById("date").innerText = dateStr.toUpperCase().replace(/,/g, "");
-        }
+    async function reloadTickerNews() {
+        try {
+            const response = await fetch('/hent-nyheder');
+            const data = await response.json();
+            const tickerContainer = document.querySelector(".ticker");
+            if (data.nyheder && data.nyheder.length > 0) {
+                tickerContainer.innerHTML = "";
+                data.nyheder.forEach(tekst => {
+                    const div = document.createElement("div");
+                    div.className = "ticker-item";
+                    div.innerText = tekst;
+                    tickerContainer.appendChild(div);
+                });
+            }
+        } catch (error) { console.error(error); }
+    }
 
-        updateClock();
-        setInterval(updateClock, 1000);
-        tjekEfterNyeMedier();
-        startSlideshow();
+    function updateClock() {
+        const now = new Date();
+        document.getElementById("time").innerText = now.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+        let dateStr = now.toLocaleDateString("da-DK", { weekday: "short", day: "numeric", month: "short" });
+        document.getElementById("date").innerText = dateStr.toUpperCase().replace(/,/g, "");
+    }
 
-        // Da vejr og nyheder nu opdateres synkront, lader vi bare siden lave en fuld genindlæsning hvert 30. minut (1800000 ms)
-        // Det sikrer at både nye billeder, friske DR nyheder og nyt vejr hentes fejlfrit ind på skærmen.
-        setInterval(() => { location.reload(); }, 1800000);
+    updateClock();
+    setInterval(updateClock, 1000);
+    tjekEfterNyeMedier();
 
-        setInterval(tjekEfterNyeMedier, 5000);
-        setInterval(reloadTickerNews, 300000);
-    </script>
+    setInterval(() => { location.reload(); }, 1800000);
+    setInterval(tjekEfterNyeMedier, 5000);
+    setInterval(reloadTickerNews, 300000);
+</script>
 </body>
 </html>

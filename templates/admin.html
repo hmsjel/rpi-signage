@@ -5,18 +5,18 @@
     <title>Infoskærm - Admin Panel</title>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 40px; color: #333; }
-        .flex-container { display: flex; gap: 30px; flex-wrap: wrap; }
-        .Kasse { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); flex: 1; min-width: 300px; margin-bottom: 30px; }
+        .flex-container { display: flex; gap: 20px; flex-wrap: wrap; }
+        .Kasse { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); flex: 1; min-width: 250px; margin-bottom: 30px; }
         label { display: block; margin-top: 15px; font-weight: bold; }
-        input[type="text"], input[type="file"] { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        input[type="text"], input[type="file"], input[type="number"] { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         button { background: #007bff; color: white; border: none; padding: 12px 20px; margin-top: 20px; cursor: pointer; border-radius: 4px; font-size: 16px; width: 100%; }
         button:hover { background: #0056b3; }
         .nyhed-knap { background: #28a745; }
+        .indstil-knap { background: #6c757d; }
         table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 30px; }
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
         th { background: #222; color: white; }
         .slet-knap { color: #dc3545; text-decoration: none; font-weight: bold; }
-        /* Gør afkrydsningsfeltet lidt større og flottere */
         .status-checkbox { transform: scale(1.5); cursor: pointer; }
     </style>
 </head>
@@ -25,7 +25,7 @@
     <h1>Signage Admin Panel</h1>
     
     <div class="flex-container">
-        <!-- Nem Upload uden datoer -->
+        <!-- Boks 1: Upload Medie -->
         <div class="Kasse">
             <h2>Upload nyt medie</h2>
             <form action="/admin" method="POST" enctype="multipart/form-data">
@@ -35,12 +35,23 @@
             </form>
         </div>
 
+        <!-- Boks 2: Nyhedstext -->
         <div class="Kasse">
             <h2>Tilføj rullende nyhedstekst</h2>
             <form action="/admin" method="POST">
                 <label>Skriv nyhedsbesked:</label>
                 <input type="text" name="nyhed_tekst" placeholder="Skriv tekst her..." required>
                 <button type="submit" class="nyhed-knap">Tilføj til ticker</button>
+            </form>
+        </div>
+
+        <!-- NY BOKS 3: Hastighedsindstilling -->
+        <div class="Kasse">
+            <h2>Slideshow hastighed</h2>
+            <form action="/admin" method="POST">
+                <label>Visningstid for billeder (sekunder):</label>
+                <input type="number" name="billed_sekunder" value="{{ nuvaerende_sekunder }}" min="1" max="120" required>
+                <button type="submit" class="indstil-knap">Gem hastighed</button>
             </form>
         </div>
     </div>
@@ -56,42 +67,43 @@
         {% endfor %}
     </table>
 
-    <!-- NY MEDIETABEL: Nu med Afkrydsningsfelt -->
     <h2>Nuværende Medier (Afkryds for at vise på infoskærm)</h2>
     <table>
         <tr>
-            <th>Vis på skærm?</th>
+            <th style="width: 80px; text-align: center;">Vis på skærm?</th>
+            <th style="width: 120px;">Preview</th>
             <th>Filnavn</th>
-            <th>Handling</th>
+            <th style="width: 100px;">Handling</th>
         </tr>
         {% for medie in medier %}
         <tr>
-            <td>
-                <!-- Checkbox der sender status direkte til Python uden at genindlæse admin siden -->
+            <td style="text-align: center;">
                 <input type="checkbox" class="status-checkbox" data-id="{{ medie.id }}" {% if medie.aktiv == 1 %}checked{% endif %} onchange="opdaterStatus(this)">
             </td>
-            <td>{{ medie.filnavn }}</td>
-            <td><a href="/slet/{{ medie.id }}" class="slet-knap" onclick="return confirm('Vil du slette filen helt?')">Slet</a></td>
+            <td>
+                {% if medie.filnavn.endswith('.mp4') or medie.filnavn.endswith('.webm') %}
+                    <video src="/uploads/{{ medie.filnavn }}" style="width: 100px; height: 60px; object-fit: cover; border-radius: 4px; background: #000;" muted controls></video>
+                {% else %}
+                    <img src="/uploads/{{ medie.filnavn }}" alt="Preview" style="width: 100px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;">
+                {% endif %}
+            </td>
+            <td style="vertical-align: middle; font-weight: 500;">{{ medie.filnavn }}</td>
+            <td style="vertical-align: middle;"><a href="/slet/{{ medie.id }}" class="slet-knap" onclick="return confirm('Vil du slette filen helt?')">Slet</a></td>
         </tr>
         {% endfor %}
     </table>
 
     <script>
-        // Sender AJAX kald til Python når der klikkes på et flueben
         async function opdaterStatus(checkbox) {
             const id = checkbox.getAttribute('data-id');
             const erAktiv = checkbox.checked;
-
             try {
                 await fetch(`/skift-status/${id}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ aktiv: erAktiv })
                 });
-            } catch (error) {
-                console.error("Kunne ikke opdatere status:", error);
-                alert("Der skete en fejl under gemning af status.");
-            }
+            } catch (error) { console.error("Fejl:", error); }
         }
     </script>
 </body>

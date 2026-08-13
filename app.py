@@ -15,7 +15,6 @@ from flask import (
     jsonify
 )
 
-
 app = Flask(__name__)
 
 # ==========================================
@@ -23,11 +22,8 @@ app = Flask(__name__)
 # ==========================================
 
 UPLOAD_FOLDER = "uploads"
-
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
 
 # ==========================================
 # DATABASE
@@ -40,7 +36,6 @@ def get_db_connection():
 
 
 def init_db():
-
     conn = get_db_connection()
 
     conn.execute("""
@@ -58,12 +53,24 @@ def init_db():
         )
     """)
 
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS indstillinger (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nogle TEXT UNIQUE NOT NULL,
+            vaerdi TEXT NOT NULL
+        )
+    """)
+
+    try:
+        conn.execute('INSERT OR IGNORE INTO indstillinger (nogle, vaerdi) VALUES ("billed_sekunder", "12")')
+    except Exception as e:
+        pass
+
     conn.commit()
     conn.close()
 
 
 init_db()
-
 
 # ==========================================
 # HJÆLPEFUNKTION:
@@ -108,7 +115,6 @@ def hent_dr_nyheder():
 
     return nyheder
 
-
 # ==========================================
 # HJÆLPEFUNKTION:
 # HENT VEJR
@@ -123,6 +129,7 @@ def hent_vejr():
 
     temperatur = "--°C"
     beskrivelse = "Henter vejr..."
+    ikon = "cloud-sun"  # Standard-ikon hvis noget driller
 
     weather_codes = {
         0: "Skyfrit",
@@ -146,6 +153,32 @@ def hent_vejr():
         95: "Tordenvejr",
         96: "Tordenvejr med hagl",
         99: "Kraftigt tordenvejr med hagl"
+    }
+
+    # Matcher WMO-koderne med de rigtige ikoner fra Bootstrap Icons
+    # Rettet: 'bi-' er fjernet fra navnene, da browseren tilføjer det automatisk via klassen
+    weather_icons = {
+        0: "sun-fill",                  # Skyfrit
+        1: "cloud-sun-fill",           # Næsten skyfrit
+        2: "cloud-sun",                # Delvist skyet
+        3: "cloud-fill",               # Skyet
+        45: "cloud-haze",              # Tåget
+        48: "cloud-haze2",             # Rimtåge
+        51: "cloud-drizzle",           # Let støvregn
+        53: "cloud-drizzle",           # Støvregn
+        55: "cloud-drizzle-fill",      # Tæt støvregn
+        61: "cloud-rain",              # Let regn
+        63: "cloud-rain-fill",         # Regnvejr
+        65: "cloud-rain-heavy-fill",   # Kraftig regn
+        71: "cloud-snow",              # Let snevejr
+        73: "cloud-snow-fill",         # Snevejr
+        75: "snow",                    # Tæt snevejr
+        80: "cloud-lightning-rain",    # Lettere regnbyger
+        81: "cloud-lightning-rain-fill", # Regnbyger
+        82: "cloud-rain-heavy",        # Kraftige regnbyger
+        95: "cloud-lightning-fill",    # Tordenvejr
+        96: "cloud-hail",              # Tordenvejr med hagl
+        99: "cloud-hail-fill"          # Kraftigt tordenvejr med hagl
     }
 
     try:
@@ -184,49 +217,43 @@ def hent_vejr():
                 "Skiftende vejr"
             )
 
+            # Hent ikonet baseret på koden
+            ikon = weather_icons.get(code, "cloud-sun"
+            )
+
     except Exception as e:
 
         print("Vejrfejl:", e)
 
-    return by, temperatur, beskrivelse
+    # RETTELSE: Vi returnerer nu også ikonet til sidst
+    return by, temperatur, beskrivelse, ikon
 
 
 # ==========================================
-# RUTE 1:
-# INFOSKÆRM
+# RUTE 1: INFOSKÆRM
 # ==========================================
 
 @app.route("/")
 def skaerm():
-
     conn = get_db_connection()
 
     aktive_medier = conn.execute("""
-        SELECT filnavn
-        FROM medier
-        WHERE aktiv = 1
-        ORDER BY id ASC
+        SELECT filnavn FROM medier WHERE aktiv = 1 ORDER BY id ASC
     """).fetchall()
 
     lokale_nyheder = conn.execute("""
-        SELECT tekst
-        FROM ticker
-        ORDER BY id ASC
+        SELECT tekst FROM ticker ORDER BY id ASC
     """).fetchall()
 
+    hastighed_row = conn.execute('SELECT vaerdi FROM indstillinger WHERE nogle = "billed_sekunder"').fetchone()
+    billed_sekunder = int(hastighed_row['vaerdi']) if hastighed_row else 12
     conn.close()
 
-    nyheds_liste = [
-        nyhed["tekst"]
-        for nyhed in lokale_nyheder
-    ]
-
-    # DR nyheder
+    nyheds_liste = [nyhed["tekst"] for nyhed in lokale_nyheder]
     dr_nyheder = hent_dr_nyheder()
     nyheds_liste.extend(dr_nyheder)
 
-    # Vejr
-    vejr_by, vejr_temp, vejr_desc = hent_vejr()
+    vejr_by, vejr_temp, vejr_desc, vejr_ikon = hent_vejr()
 
     return render_template(
         "skaerm.html",
@@ -234,150 +261,74 @@ def skaerm():
         nyheder=nyheds_liste,
         temp=vejr_temp,
         beskrivelse=vejr_desc,
-        by=vejr_by
+        by=vejr_by,
+        sekunder=billed_sekunder,
+        ikon=vejr_ikon # Her sendes ikonet afsted
     )
 
+
 # ==========================================
-# RUTE 2:
-# ADMIN PANEL
+# RUTE 2: ADMIN PANEL
 # ==========================================
 
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
-
     conn = get_db_connection()
 
-    # --------------------------------------
-    # POST
-    # --------------------------------------
-
     if request.method == "POST":
-
-        # ----------------------------------
-        # Ny ticker-tekst
-        # ----------------------------------
-
         if "nyhed_tekst" in request.form:
-
             tekst = request.form["nyhed_tekst"].strip()
-
             if tekst:
-
-                conn.execute(
-                    """
-                    INSERT INTO ticker (tekst)
-                    VALUES (?)
-                    """,
-                    (tekst,)
-                )
-
+                conn.execute("INSERT INTO ticker (tekst) VALUES (?)", (tekst,))
                 conn.commit()
-
-        # ----------------------------------
-        # Upload medie
-        # ----------------------------------
 
         elif "medie_fil" in request.files:
-
             fil = request.files["medie_fil"]
-
             if fil and fil.filename:
-
                 filnavn = fil.filename
-
-                fil.save(
-                    os.path.join(
-                        app.config["UPLOAD_FOLDER"],
-                        filnavn
-                    )
-                )
-
-                conn.execute(
-                    """
-                    INSERT INTO medier
-                    (filnavn, aktiv)
-                    VALUES (?, 1)
-                    """,
-                    (filnavn,)
-                )
-
+                fil.save(os.path.join(app.config["UPLOAD_FOLDER"], filnavn))
+                conn.execute("INSERT INTO medier (filnavn, aktiv) VALUES (?, 1)", (filnavn,))
                 conn.commit()
 
-        return redirect(
-            url_for("admin")
-        )
+        elif "billed_sekunder" in request.form:
+            sekunder = request.form["billed_sekunder"].strip()
+            if sekunder:
+                conn.execute('UPDATE indstillinger SET vaerdi = ? WHERE nogle = "billed_sekunder"', (sekunder,))
+                conn.commit()
 
-    # --------------------------------------
-    # Hent medier
-    # --------------------------------------
+        return redirect(url_for("admin"))
 
-    alle_medier = conn.execute("""
-        SELECT *
-        FROM medier
-        ORDER BY id ASC
-    """).fetchall()
-
-    # --------------------------------------
-    # Hent ticker
-    # --------------------------------------
-
-    alle_nyheder = conn.execute("""
-        SELECT *
-        FROM ticker
-        ORDER BY id ASC
-    """).fetchall()
-
+    alle_medier = conn.execute("SELECT * FROM medier ORDER BY id ASC").fetchall()
+    alle_nyheder = conn.execute("SELECT * FROM ticker ORDER BY id ASC").fetchall()
+    
+    hastighed_row = conn.execute('SELECT vaerdi FROM indstillinger WHERE nogle = "billed_sekunder"').fetchone()
+    billed_sekunder = hastighed_row['vaerdi'] if hastighed_row else "12"
     conn.close()
 
     return render_template(
         "admin.html",
         medier=alle_medier,
-        nyheder=alle_nyheder
+        nyheder=alle_nyheder,
+        nuvaerende_sekunder=billed_sekunder
     )
-
 
 # ==========================================
 # SKIFT STATUS PÅ MEDIE
 # ==========================================
 
-@app.route(
-    "/skift-status/<int:id>",
-    methods=["POST"]
-)
+@app.route("/skift-status/<int:id>", methods=["POST"])
 def skift_status(id):
-
     data = request.get_json()
-
     if not data:
-        return jsonify(
-            success=False,
-            error="Ingen data modtaget"
-        ), 400
+        return jsonify(success=False, error="Ingen data modtaget"), 400
 
-    ny_status = (
-        1
-        if data.get("aktiv")
-        else 0
-    )
-
+    ny_status = 1 if data.get("aktiv") else 0
     conn = get_db_connection()
-
-    conn.execute(
-        """
-        UPDATE medier
-        SET aktiv = ?
-        WHERE id = ?
-        """,
-        (ny_status, id)
-    )
-
+    conn.execute("UPDATE medier SET aktiv = ? WHERE id = ?", (ny_status, id))
     conn.commit()
     conn.close()
 
-    return jsonify(
-        success=True
-    )
-
+    return jsonify(success=True)
 
 # ==========================================
 # SLET MEDIE
@@ -385,49 +336,21 @@ def skift_status(id):
 
 @app.route("/slet/<int:id>")
 def slet(id):
-
     conn = get_db_connection()
-
-    medie = conn.execute(
-        """
-        SELECT filnavn
-        FROM medier
-        WHERE id = ?
-        """,
-        (id,)
-    ).fetchone()
+    medie = conn.execute("SELECT filnavn FROM medier WHERE id = ?", (id,)).fetchone()
 
     if medie:
-
-        filsti = os.path.join(
-            app.config["UPLOAD_FOLDER"],
-            medie["filnavn"]
-        )
-
+        filsti = os.path.join(app.config["UPLOAD_FOLDER"], medie["filnavn"])
         try:
-
             os.remove(filsti)
-
         except FileNotFoundError:
-
             pass
 
-        conn.execute(
-            """
-            DELETE FROM medier
-            WHERE id = ?
-            """,
-            (id,)
-        )
-
+        conn.execute("DELETE FROM medier WHERE id = ?", (id,))
         conn.commit()
 
     conn.close()
-
-    return redirect(
-        url_for("admin")
-    )
-
+    return redirect(url_for("admin"))
 
 # ==========================================
 # SLET NYHED
@@ -435,100 +358,58 @@ def slet(id):
 
 @app.route("/slet-nyhed/<int:id>")
 def slet_nyhed(id):
-
     conn = get_db_connection()
-
-    conn.execute(
-        """
-        DELETE FROM ticker
-        WHERE id = ?
-        """,
-        (id,)
-    )
-
+    conn.execute("DELETE FROM ticker WHERE id = ?", (id,))
     conn.commit()
     conn.close()
-
-    return redirect(
-        url_for("admin")
-    )
-
+    return redirect(url_for("admin"))
 
 # ==========================================
-# HENT NYHEDER
-# Bruges af JavaScript
+# HENT NYHEDER (JavaScript-opdatering)
 # ==========================================
 
 @app.route("/hent-nyheder")
 def hent_nyheder():
-
     conn = get_db_connection()
-
     lokale_nyheder = conn.execute("""
-        SELECT tekst
-        FROM ticker
-        ORDER BY id ASC
+        SELECT tekst FROM ticker ORDER BY id ASC
     """).fetchall()
-
     conn.close()
 
-    nyheds_liste = [
-        nyhed["tekst"]
-        for nyhed in lokale_nyheder
-    ]
-
-    # Hent DR
+    nyheds_liste = [nyhed["tekst"] for nyhed in lokale_nyheder]
     dr_nyheder = hent_dr_nyheder()
-
     nyheds_liste.extend(dr_nyheder)
 
-    return jsonify(
-        nyheder=nyheds_liste
-    )
-
+    return jsonify(nyheder=nyheds_liste)
 
 # ==========================================
-# HENT AKTIVE MEDIER
-# Bruges af JavaScript
+# HENT AKTIVE MEDIER & HASTIGHED
 # ==========================================
 
 @app.route("/hent-aktive-medier")
 def hent_aktive_medier():
-
     conn = get_db_connection()
-
     aktive_medier = conn.execute("""
-        SELECT filnavn
-        FROM medier
-        WHERE aktiv = 1
-        ORDER BY id ASC
+        SELECT filnavn FROM medier WHERE aktiv = 1 ORDER BY id ASC
     """).fetchall()
 
+    hastighed_row = conn.execute('SELECT vaerdi FROM indstillinger WHERE nogle = "billed_sekunder"').fetchone()
+    billed_sekunder = int(hastighed_row['vaerdi']) if hastighed_row else 12
     conn.close()
 
     return jsonify(
-        medier=[
-            medie["filnavn"]
-            for medie in aktive_medier
-        ]
+        medier=[medie["filnavn"] for medie in aktive_medier],
+        sekunder=billed_sekunder
     )
 
-
 # ==========================================
-# HENT VEJR
-# Bruges eventuelt af JavaScript
+# HENT VEJR API
 # ==========================================
 
 @app.route("/hent-vejr")
 def hent_vejr_api():
-
-    temperatur, beskrivelse = hent_vejr()
-
-    return jsonify(
-        temp=temperatur,
-        beskrivelse=beskrivelse
-    )
-
+    by, temperatur, beskrivelse = hent_vejr()
+    return jsonify(temp=temperatur, beskrivelse=beskrivelse)
 
 # ==========================================
 # UPLOADS
@@ -536,21 +417,11 @@ def hent_vejr_api():
 
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
-
-    return send_from_directory(
-        app.config["UPLOAD_FOLDER"],
-        filename
-    )
-
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
 # ==========================================
 # START FLASK
 # ==========================================
 
 if __name__ == "__main__":
-
-    app.run(
-        debug=True,
-        host="0.0.0.0",
-        port=5000
-    )
+    app.run(debug=True, host="0.0.0.0", port=5000)
