@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Infoskærm - Live</title>
     
-    <!-- Link til din nye eksterne CSS-fil via Flask -->
+    <!-- Link til din eksterne CSS-fil via Flask -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -21,7 +21,7 @@
             {% endfor %}
         {% else %}
             <!-- Hvis ingen medier er planlagt til i dag -->
-            <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:30px; z-index:10;">
+            <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:30px; z-index:10; color: white;">
                 Ingen aktive medier planlagt for i dag.
             </div>
         {% endif %}
@@ -33,25 +33,13 @@
         <div id="time"></div>
     </div>
 
-    <!-- Info-titel midt på skærmen -->
-    <div class="program-badge">
-        <div class="logo-box">INFO</div>
-        <div class="program-title">TVA Live</div>
-    </div>
-
-    <!-- Navnebjælke (Lower third) -->
-    <div class="lower-third">
-        <h2>Helle Smidstrup</h2>
-        <p>Infoskærms Ansvarlig</p>
-    </div>
-
-    <!-- Rullende Nyhedsticker i bunden -->
+    <!-- Rullende Nyhedticker i bunden -->
     <div class="ticker-wrap">
         <div class="ticker-label">Seneste nyt</div>
         <div class="ticker">
             {% if nyheder %}
-                {% for nyhed in nyheder %}
-                    <div class="ticker-item">{{ nyhed.tekst }}</div>
+                {% for tekst in nyheder %}
+                    <div class="ticker-item">{{ tekst }}</div>
                 {% endfor %}
             {% else %}
                 <div class="ticker-item">Ingen nye opdateringer lige nu...</div>
@@ -71,7 +59,7 @@
                 current = (current + 1) % slides.length;
                 slides[current].classList.add("active");
                 if(slides[current].tagName === "VIDEO") { slides[current].currentTime = 0; slides[current].play(); }
-            }, 8000);
+            }, 8000); // Skifter medie hvert 8. sekund
         }
 
         // Genindlæs siden hver time for at fange nye dags-planlægninger

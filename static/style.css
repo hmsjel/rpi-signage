@@ -150,7 +150,7 @@ body {
     align-items: center;
     white-space: nowrap;
     padding-left: 100%;
-    animation: ticker-move 25s linear infinite;
+    animation: ticker-move 60s linear infinite;
 }
 
 .ticker-item {
