@@ -408,8 +408,13 @@ def hent_aktive_medier():
 
 @app.route("/hent-vejr")
 def hent_vejr_api():
-    by, temperatur, beskrivelse = hent_vejr()
-    return jsonify(temp=temperatur, beskrivelse=beskrivelse)
+    by, temperatur, beskrivelse, ikon = hent_vejr()
+
+    return jsonify(
+        temp=temperatur,
+        beskrivelse=beskrivelse,
+        ikon=ikon
+    )
 
 # ==========================================
 # UPLOADS
