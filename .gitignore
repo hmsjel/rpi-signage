@@ -219,3 +219,6 @@ __marimo__/
 
 # Lokale billeder til infoskærmen
 uploads/
+
+# Ignorer den lokale SQLite database
+*.db
