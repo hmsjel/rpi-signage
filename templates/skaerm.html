@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <title>Infoskærm - Live</title>
+    <!-- Genbrug CSS-stilarterne fra DR Nyheds-looket i forrige svar her -->
+    <style>
+        /* (Indsæt hele <style> sektionen fra mit forrige DR Nyheds-look svar her) */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; color: #fff; font-family: 'Arial', sans-serif; overflow: hidden; width: 100vw; height: 100vh; }
+        .media-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
+        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+        .active { display: block; }
+        .top-right-clock { position: absolute; top: 40px; right: 40px; text-align: right; text-transform: uppercase; font-weight: bold; z-index: 10; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); }
+        #date { font-size: 18px; letter-spacing: 2px; color: #ccc; }
+        #time { font-size: 64px; line-height: 1; margin-top: 5px; }
+        .program-badge { position: absolute; top: 35%; left: 5%; z-index: 10; }
+        .logo-box { background: #e60000; color: white; padding: 8px 12px; font-weight: 900; font-size: 24px; display: inline-block; border-radius: 4px; margin-bottom: 15px; }
+        .program-title { font-size: 72px; font-weight: bold; text-shadow: 3px 3px 8px rgba(0,0,0,0.9); }
+        .lower-third { position: absolute; bottom: 15%; left: 5%; background: rgba(255, 255, 255, 0.85); color: #222; padding: 20px 40px; border-radius: 4px; min-width: 350px; z-index: 10; }
+        .lower-third h2 { font-size: 32px; font-weight: bold; }
+        .lower-third p { font-size: 18px; color: #555; }
+        .ticker-wrap { position: absolute; bottom: 0; left: 0; width: 100vw; background: rgba(0, 0, 0, 0.85); border-top: 3px solid #e60000; padding: 15px 0; display: flex; align-items: center; overflow: hidden; z-index: 10; }
+        .ticker-label { background: #e60000; color: white; font-weight: bold; padding: 0 20px; font-size: 16px; text-transform: uppercase; position: absolute; left: 0; z-index: 11; height: 100%; display: flex; align-items: center; }
+        .ticker { display: inline-block; white-space: nowrap; padding-left: 100%; animation: ticker-move 25s linear infinite; }
+        .ticker-item { display: inline-block; padding: 0 40px; font-size: 22px; color: #fff; }
+        @keyframes ticker-move { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
+    </style>
+</head>
+<body>
+
+    <!-- Dynamisk container drevet af Flask databasen -->
+    <div class="media-container">
+        {% if medier %}
+            {% for medie in medier %}
+                {% if medie.filnavn.endswith('.mp4') or medie.filnavn.endswith('.webm') %}
+                    <video src="/uploads/{{ medie.filnavn }}" class="slide {% if loop.first %}active{% endif %}" autoplay loop muted></video>
+                {% else %}
+                    <img src="/uploads/{{ medie.filnavn }}" class="slide {% if loop.first %}active{% endif %}" alt="Medie">
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <!-- Hvis ingen medier er planlagt til i dag -->
+            <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:30px; z-index:10;">
+                Ingen aktive medier planlagt for i dag.
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Ur, tekster og ticker herunder -->
+    <div class="top-right-clock"><div id="date"></div><div id="time"></div></div>
+    <div class="program-badge"><div class="logo-box">INFO</div><div class="program-title">TVA Live</div></div>
+    <div class="lower-third"><h2>Helle Smidstrup</h2><p>Infoskærms Ansvarlig</p></div>
+    <div class="ticker-wrap">
+        <div class="ticker-label">Seneste nyt</div>
+        <div class="ticker">
+            <div class="ticker-item">Velkommen til den datostyrede infoskærm!</div>
+            <div class="ticker-item">Indholdet skifter automatisk baseret på admin-panelet.</div>
+        </div>
+    </div>
+
+    <script>
+        // Slideshow-logik (Henter automatisk alle aktive klasser)
+        const slides = document.querySelectorAll(".slide");
+        let current = 0;
+
+        if (slides.length > 1) {
+            setInterval(() => {
+                if(slides[current].tagName === "VIDEO") slides[current].pause();
+                slides[current].classList.remove("active");
+                current = (current + 1) % slides.length;
+                slides[current].classList.add("active");
+                if(slides[current].tagName === "VIDEO") { slides[current].currentTime = 0; slides[current].play(); }
+            }, 8000);
+        }
+
+        // Genindlæs siden hver time for at fange nye dags-planlægninger
+        setInterval(() => { location.reload(); }, 3600000);
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById("time").innerText = now.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+            let dateStr = now.toLocaleDateString("da-DK", { weekday: "short", day: "numeric", month: "short" });
+            document.getElementById("date").innerText = dateStr.toUpperCase().replace(/,/g, "");
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+    </script>
+</body>
+</html>
