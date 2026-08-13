@@ -5,13 +5,16 @@
     <title>Infoskærm - Admin Panel</title>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 40px; color: #333; }
-        .Kasse { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 600px; margin-bottom: 30px; }
+        .flex-container { display: flex; gap: 30px; flex-wrap: wrap; }
+        .Kasse { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); flex: 1; min-width: 300px; margin-bottom: 30px; }
         h1, h2 { color: #111; }
         label { display: block; margin-top: 15px; font-weight: bold; }
         input[type="text"], input[type="date"], input[type="file"] { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         button { background: #007bff; color: white; border: none; padding: 12px 20px; margin-top: 20px; cursor: pointer; border-radius: 4px; font-size: 16px; width: 100%; }
         button:hover { background: #0056b3; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .nyhed-knap { background: #28a745; }
+        .nyhed-knap:hover { background: #218838; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 30px; }
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
         th { background: #222; color: white; }
         .slet-knap { color: #dc3545; text-decoration: none; font-weight: bold; }
@@ -21,22 +24,46 @@
 
     <h1>Signage Admin Panel</h1>
     
-    <!-- Upload Formular -->
-    <div class="Kasse">
-        <h2>Planlæg nyt medie</h2>
-        <form action="/admin" method="POST" enctype="multipart/form-data">
-            <label>Vælg Billede eller Video:</label>
-            <input type="file" name="medie_fil" accept="image/*,video/*" required>
-            
-            <label>Vis fra dato:</label>
-            <input type="date" name="start_dato" required>
-            
-            <label>Vis til og med dato:</label>
-            <input type="date" name="slut_dato" required>
-            
-            <button type="submit">Gem og Planlæg</button>
-        </form>
+    <div class="flex-container">
+        <!-- Planlæg Medier -->
+        <div class="Kasse">
+            <h2>Planlæg nyt medie</h2>
+            <form action="/admin" method="POST" enctype="multipart/form-data">
+                <label>Vælg Billede eller Video:</label>
+                <input type="file" name="medie_fil" accept="image/*,video/*" required>
+                <label>Vis fra dato:</label>
+                <input type="date" name="start_dato" required>
+                <label>Vis til og med dato:</label>
+                <input type="date" name="slut_dato" required>
+                <button type="submit">Gem og Planlæg</button>
+            </form>
+        </div>
+
+        <!-- Opret Nyheder -->
+        <div class="Kasse">
+            <h2>Tilføj rullende nyhedstekst</h2>
+            <form action="/admin" method="POST">
+                <label>Skriv nyhedsbesked:</label>
+                <input type="text" name="nyhed_tekst" placeholder="F.eks. Velkommen til åbent hus på fredag!..." required>
+                <button type="submit" class="nyhed-knap">Tilføj til ticker</button>
+            </form>
+        </div>
     </div>
+
+    <!-- Oversigt over nyhedstekster -->
+    <h2>Rullende Nyheder i Bunden</h2>
+    <table>
+        <tr>
+            <th>Tekstbesked</th>
+            <th>Handling</th>
+        </tr>
+        {% for nyhed in nyheder %}
+        <tr>
+            <td>{{ nyhed.tekst }}</td>
+            <td><a href="/slet-nyhed//{{ nyhed.id }}" class="slet-knap" onclick="return confirm('Vil du slette denne nyhed?')">Slet</a></td>
+        </tr>
+        {% endfor %}
+    </table>
 
     <!-- Oversigt over planlagt indhold -->
     <h2>Nuværende Medier i Databasen</h2>
