@@ -83,9 +83,9 @@
 
             display: flex;
 
-            gap: 20px;
+            gap: 12px;
 
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
         }
 
 
@@ -93,19 +93,84 @@
 
             background: white;
 
-            padding: 25px;
+            padding: 16px;
 
             border-radius: 8px;
 
             box-shadow:
-                0 4px 10px rgba(0,0,0,0.1);
+                0 3px 8px rgba(0,0,0,0.8);
 
             flex: 1;
 
-            min-width: 280px;
+            min-width: 0px;
 
             margin-bottom: 20px;
         }
+
+        .Kasse h2 {
+            font-size: 20px;
+            margin-top: 0;
+            margin-bottom: 12px;
+        }
+
+        .Kasse label {
+            display: block;
+            margin-top: 10px;
+            margin-bottom: 4px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .Kasse input[type="text"],
+        .Kasse input[type="file"],
+        .Kasse input[type="number"],
+        .Kasse input[type="date"],
+        .Kasse select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 3px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        .Kasse button {
+            width: 100%;
+            padding: 9px 12px;
+            margin-top: 12px;
+            font-size: 14px;
+        }
+
+        .storage-box {
+            background: white;
+            padding: 14px 25px;
+            border-radius: 8px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        .storage-box h2 {
+            margin: 0 0 6px 0;
+            font-size: 20px;
+        }
+
+        .storage-box h3 {
+            margin: 0 0 8px 0;
+            font-size: 22px;
+        }
+
+        .storage-box .progress {
+            height: 10px;
+            margin: 5px 0;
+        }
+
+.storage-box p {
+    margin: 4px 0 0 0;
+    font-size: 11px;
+    color: #666;
+}
 
 
         label {
