@@ -8,11 +8,12 @@
         .flex-container { display: flex; gap: 20px; flex-wrap: wrap; }
         .Kasse { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); flex: 1; min-width: 250px; margin-bottom: 30px; }
         label { display: block; margin-top: 15px; font-weight: bold; }
-        input[type="text"], input[type="file"], input[type="number"] { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        input[type="text"], input[type="file"], input[type="number"], select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; background: white; }
         button { background: #007bff; color: white; border: none; padding: 12px 20px; margin-top: 20px; cursor: pointer; border-radius: 4px; font-size: 16px; width: 100%; }
         button:hover { background: #0056b3; }
         .nyhed-knap { background: #28a745; }
         .indstil-knap { background: #6c757d; }
+        .vejr-knap { background: #17a2b8; }
         table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 30px; }
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
         th { background: #222; color: white; }
@@ -35,7 +36,7 @@
             </form>
         </div>
 
-        <!-- Boks 2: Nyhedstext -->
+        <!-- Boks 2: Nyhedstekst -->
         <div class="Kasse">
             <h2>Tilføj rullende nyhedstekst</h2>
             <form action="/admin" method="POST">
@@ -45,13 +46,27 @@
             </form>
         </div>
 
-        <!-- NY BOKS 3: Hastighedsindstilling -->
+        <!-- Boks 3: Hastighedsindstilling -->
         <div class="Kasse">
             <h2>Slideshow hastighed</h2>
             <form action="/admin" method="POST">
                 <label>Visningstid for billeder (sekunder):</label>
                 <input type="number" name="billed_sekunder" value="{{ nuvaerende_sekunder }}" min="1" max="120" required>
                 <button type="submit" class="indstil-knap">Gem hastighed</button>
+            </form>
+        </div>
+
+        <!-- NY BOKS 4: Vejr-lokation -->
+        <div class="Kasse">
+            <h2>Vejr-lokation</h2>
+            <form action="/admin" method="POST">
+                <label>Vælg by til vejrudsigten:</label>
+                <select name="valgt_by">
+                    {% for by in byer %}
+                        <option value="{{ by }}" {% if by == nuvaerende_by %}selected{% endif %}>{{ by }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="vejr-knap">Opdater by</button>
             </form>
         </div>
     </div>
