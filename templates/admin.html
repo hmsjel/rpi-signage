@@ -5,10 +5,8 @@
 
     <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
     <title>Infoskærm - Admin Panel</title>
 
@@ -22,23 +20,27 @@
 
         body {
 
-            font-family:
-                Arial,
-                sans-serif;
+            font-family: Arial, sans-serif;
 
             background: #f4f4f9;
 
-            margin: 0;
-
             padding: 30px;
+
+            margin: 0;
 
             color: #333;
         }
 
 
-        /* ==================================================
-           TOP
-           ================================================== */
+        h1 {
+            margin-bottom: 25px;
+        }
+
+
+        h2 {
+            margin-top: 0;
+        }
+
 
         .top-bar {
 
@@ -48,25 +50,11 @@
 
             align-items: center;
 
-            margin-bottom: 30px;
+            margin-bottom: 25px;
 
-            background: white;
+            gap: 15px;
 
-            padding: 20px 25px;
-
-            border-radius: 10px;
-
-            box-shadow:
-                0 4px 10px
-                rgba(0,0,0,0.08);
-        }
-
-
-        .top-bar h1 {
-
-            margin: 0;
-
-            font-size: 28px;
+            flex-wrap: wrap;
         }
 
 
@@ -87,28 +75,17 @@
 
 
         .logout:hover {
-
             background: #b02a37;
         }
 
 
-        /* ==================================================
-           KASSER
-           ================================================== */
-
         .flex-container {
 
-            display: grid;
-
-            grid-template-columns:
-                repeat(
-                    auto-fit,
-                    minmax(280px, 1fr)
-                );
+            display: flex;
 
             gap: 20px;
 
-            margin-bottom: 40px;
+            flex-wrap: wrap;
         }
 
 
@@ -118,33 +95,24 @@
 
             padding: 25px;
 
-            border-radius: 10px;
+            border-radius: 8px;
 
             box-shadow:
-                0 4px 10px
-                rgba(0,0,0,0.08);
+                0 4px 10px rgba(0,0,0,0.1);
+
+            flex: 1;
+
+            min-width: 280px;
+
+            margin-bottom: 20px;
         }
 
-
-        .Kasse h2 {
-
-            margin-top: 0;
-
-            font-size: 20px;
-        }
-
-
-        /* ==================================================
-           FORMULAR
-           ================================================== */
 
         label {
 
             display: block;
 
             margin-top: 15px;
-
-            margin-bottom: 5px;
 
             font-weight: bold;
         }
@@ -160,10 +128,13 @@
 
             padding: 10px;
 
-            border:
-                1px solid #ccc;
+            margin-top: 5px;
 
-            border-radius: 5px;
+            border: 1px solid #ccc;
+
+            border-radius: 4px;
+
+            box-sizing: border-box;
 
             font-size: 14px;
 
@@ -171,22 +142,11 @@
         }
 
 
-        input:focus,
-        select:focus {
-
-            outline: none;
-
-            border-color: #007bff;
-        }
-
-
-        /* ==================================================
-           KNAPPER
-           ================================================== */
-
         button {
 
-            width: 100%;
+            background: #007bff;
+
+            color: white;
 
             border: none;
 
@@ -196,42 +156,30 @@
 
             cursor: pointer;
 
-            border-radius: 5px;
+            border-radius: 4px;
 
-            font-size: 15px;
+            font-size: 16px;
 
-            color: white;
-
-            background: #007bff;
+            width: 100%;
         }
 
 
         button:hover {
-
-            opacity: 0.9;
-        }
-
-
-        .upload-knap {
-
-            background: #007bff;
+            background: #0056b3;
         }
 
 
         .nyhed-knap {
-
             background: #28a745;
         }
 
 
         .indstil-knap {
-
             background: #6c757d;
         }
 
 
         .vejr-knap {
-
             background: #17a2b8;
         }
 
@@ -243,84 +191,8 @@
             font-size: 13px;
 
             padding: 9px 12px;
-        }
 
-
-        .dato-knap:hover {
-
-            background: #0056b3;
-        }
-
-
-        /* ==================================================
-           SEKTIONER
-           ================================================== */
-
-        .section {
-
-            margin-bottom: 40px;
-        }
-
-
-        .section h2 {
-
-            margin-bottom: 10px;
-        }
-
-
-        .section-info {
-
-            color: #666;
-
-            margin-top: 0;
-
-            margin-bottom: 20px;
-        }
-
-
-        /* ==================================================
-           NYHEDSTABEL
-           ================================================== */
-
-        table {
-
-            width: 100%;
-
-            border-collapse: collapse;
-
-            background: white;
-
-            border-radius: 8px;
-
-            overflow: hidden;
-
-            box-shadow:
-                0 4px 10px
-                rgba(0,0,0,0.06);
-        }
-
-
-        th,
-        td {
-
-            padding: 12px;
-
-            border-bottom:
-                1px solid #ddd;
-
-            text-align: left;
-        }
-
-
-        th {
-
-            background: #eee;
-        }
-
-
-        tr:last-child td {
-
-            border-bottom: none;
+            margin-top: 8px;
         }
 
 
@@ -334,15 +206,65 @@
         }
 
 
-        .slet-knap:hover {
+        /* ====================================================
+           DISKPLADS
+           ==================================================== */
 
-            text-decoration: underline;
+        .diskplads {
+
+            margin-top: 10px;
         }
 
 
-        /* ==================================================
-           MEDIA GRID
-           ================================================== */
+        .disk-tal {
+
+            font-size: 25px;
+
+            font-weight: bold;
+
+            margin-bottom: 12px;
+        }
+
+
+        .disk-bar {
+
+            width: 100%;
+
+            height: 24px;
+
+            background: #e9ecef;
+
+            border-radius: 12px;
+
+            overflow: hidden;
+        }
+
+
+        .disk-bar-brugt {
+
+            height: 100%;
+
+            width: {{ diskplads.brugt_procent }}%;
+
+            background: #007bff;
+
+            transition: width 0.5s;
+        }
+
+
+        .disk-info {
+
+            margin-top: 10px;
+
+            font-size: 13px;
+
+            color: #666;
+        }
+
+
+        /* ====================================================
+           MEDIE GRID
+           ==================================================== */
 
         .media-grid {
 
@@ -357,22 +279,19 @@
             gap: 20px;
 
             margin-top: 20px;
+
+            margin-bottom: 40px;
         }
 
-
-        /* ==================================================
-           MEDIA CARD
-           ================================================== */
 
         .media-card {
 
             background: white;
 
-            border-radius: 10px;
+            border-radius: 8px;
 
             box-shadow:
-                0 4px 10px
-                rgba(0,0,0,0.08);
+                0 4px 10px rgba(0,0,0,0.08);
 
             padding: 15px;
 
@@ -384,20 +303,15 @@
 
             text-align: center;
 
-            border:
-                1px solid #eee;
+            border: 1px solid #eee;
         }
 
-
-        /* ==================================================
-           PREVIEW
-           ================================================== */
 
         .media-card-preview {
 
             width: 100%;
 
-            height: 140px;
+            height: 120px;
 
             object-fit: cover;
 
@@ -409,15 +323,11 @@
         }
 
 
-        /* ==================================================
-           FILNAVN
-           ================================================== */
-
         .media-card-title {
 
             font-size: 13px;
 
-            font-weight: bold;
+            font-weight: 500;
 
             word-break: break-all;
 
@@ -428,10 +338,6 @@
             min-height: 32px;
         }
 
-
-        /* ==================================================
-           STATUS
-           ================================================== */
 
         .media-status {
 
@@ -481,10 +387,6 @@
         }
 
 
-        /* ==================================================
-           UDLØBSDATO
-           ================================================== */
-
         .udloeb-container {
 
             width: 100%;
@@ -495,8 +397,7 @@
 
             padding-top: 10px;
 
-            border-top:
-                1px solid #eee;
+            border-top: 1px solid #eee;
         }
 
 
@@ -520,39 +421,17 @@
         }
 
 
-        .udloeb-info {
-
-            font-size: 11px;
-
-            color: #777;
-
-            margin-top: 6px;
-        }
-
-
-        .udloeb-aldrig {
-
-            color: #28a745;
-        }
-
-
-        /* ==================================================
-           KONTROLLER
-           ================================================== */
-
         .media-card-controls {
 
             display: flex;
 
             width: 100%;
 
-            justify-content:
-                space-between;
+            justify-content: space-between;
 
             align-items: center;
 
-            border-top:
-                1px solid #eee;
+            border-top: 1px solid #eee;
 
             padding-top: 12px;
         }
@@ -576,58 +455,52 @@
 
         .status-checkbox {
 
-            transform: scale(1.4);
+            transform: scale(1.5);
 
             cursor: pointer;
         }
 
 
-        /* ==================================================
-           BESKED
-           ================================================== */
+        /* ====================================================
+           TABELLER
+           ==================================================== */
 
-        .empty {
+        table {
+
+            width: 100%;
+
+            border-collapse: collapse;
 
             background: white;
 
-            padding: 30px;
-
-            text-align: center;
-
-            border-radius: 8px;
-
-            color: #777;
+            margin-bottom: 40px;
         }
 
 
-        /* ==================================================
-           RESPONSIVE
-           ================================================== */
+        th,
+        td {
+
+            padding: 12px;
+
+            border-bottom: 1px solid #ddd;
+
+            text-align: left;
+        }
+
+
+        th {
+            background: #eee;
+        }
+
 
         @media (max-width: 600px) {
 
             body {
-
                 padding: 15px;
             }
 
-
-            .top-bar {
-
-                flex-direction: column;
-
-                gap: 15px;
-
-                align-items:
-                    flex-start;
-            }
-
-
-            .logout {
-
-                width: 100%;
-
-                text-align: center;
+            .Kasse {
+                min-width: 100%;
             }
 
         }
@@ -647,9 +520,8 @@
 <div class="top-bar">
 
     <h1>
-        📺 Infoskærm Admin
+        Signage Admin Panel
     </h1>
-
 
     <a
         href="/logout"
@@ -659,7 +531,6 @@
     </a>
 
 </div>
-
 
 
 <!-- ============================================================
@@ -676,7 +547,7 @@
     <div class="Kasse">
 
         <h2>
-            📤 Upload nyt medie
+            Upload nyt medie
         </h2>
 
 
@@ -701,6 +572,7 @@
 
             <label>
                 Udløbsdato
+                (valgfri):
             </label>
 
 
@@ -710,23 +582,13 @@
             >
 
 
-            <small>
-                Lad feltet være tomt,
-                hvis mediet aldrig skal udløbe.
-            </small>
-
-
-            <button
-                type="submit"
-                class="upload-knap"
-            >
+            <button type="submit">
                 Upload og aktiver
             </button>
 
         </form>
 
     </div>
-
 
 
     <!-- ========================================================
@@ -736,7 +598,7 @@
     <div class="Kasse">
 
         <h2>
-            📰 Tilføj nyhed
+            Tilføj rullende nyhed
         </h2>
 
 
@@ -746,7 +608,7 @@
         >
 
             <label>
-                Nyhedsbesked:
+                Skriv nyhedsbesked:
             </label>
 
 
@@ -770,7 +632,6 @@
     </div>
 
 
-
     <!-- ========================================================
          BILLEDHASTIGHED
          ======================================================== -->
@@ -778,7 +639,7 @@
     <div class="Kasse">
 
         <h2>
-            🖼️ Slideshow hastighed
+            Slideshow hastighed
         </h2>
 
 
@@ -788,8 +649,7 @@
         >
 
             <label>
-                Visningstid for billeder
-                (sekunder):
+                Visningstid for billeder (sekunder):
             </label>
 
 
@@ -807,13 +667,12 @@
                 type="submit"
                 class="indstil-knap"
             >
-                Gem billedhastighed
+                Gem hastighed
             </button>
 
         </form>
 
     </div>
-
 
 
     <!-- ========================================================
@@ -823,7 +682,7 @@
     <div class="Kasse">
 
         <h2>
-            📰 Nyhedsbjælkens hastighed
+            Nyhedsbjælke hastighed
         </h2>
 
 
@@ -833,8 +692,7 @@
         >
 
             <label>
-                Tid for én hel rulning
-                (sekunder):
+                Animationstid (sekunder):
             </label>
 
 
@@ -848,22 +706,16 @@
             >
 
 
-            <small>
-                Lavere tal = hurtigere rulning.
-            </small>
-
-
             <button
                 type="submit"
-                class="indstil-knap"
+                class="nyhed-knap"
             >
-                Gem nyhedshastighed
+                Gem ticker-hastighed
             </button>
 
         </form>
 
     </div>
-
 
 
     <!-- ========================================================
@@ -873,7 +725,7 @@
     <div class="Kasse">
 
         <h2>
-            🌤️ Vejr-lokation
+            Vejr-lokation
         </h2>
 
 
@@ -897,9 +749,7 @@
                             selected
                         {% endif %}
                     >
-
                         {{ by }}
-
                     </option>
 
                 {% endfor %}
@@ -911,369 +761,392 @@
                 type="submit"
                 class="vejr-knap"
             >
-                Opdater vejr
+                Opdater by
             </button>
 
         </form>
 
     </div>
 
-</div>
 
+    <!-- ========================================================
+         DISKPLADS
+         ======================================================== -->
+
+    <div class="Kasse">
+
+        <h2>
+            💾 Lagerplads
+        </h2>
+
+
+        <div class="diskplads">
+
+            <div class="disk-tal">
+
+                {{ diskplads.ledig }}
+                GB ledig
+
+            </div>
+
+
+            <div class="disk-bar">
+
+                <div
+                    class="disk-bar-brugt"
+                ></div>
+
+            </div>
+
+
+            <div class="disk-info">
+
+                {{ diskplads.brugt }}
+                GB brugt af
+                {{ diskplads.total }}
+                GB
+
+
+                <br>
+
+
+                {{ diskplads.brugt_procent }}%
+                af disken er brugt.
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 
 
 <!-- ============================================================
      NYHEDER
      ============================================================ -->
 
-<div class="section">
-
-    <h2>
-        📰 Rullende nyheder
-    </h2>
+<h2>
+    Rullende nyheder
+</h2>
 
 
-    <p class="section-info">
-        Disse beskeder vises sammen med DR-nyheder
-        i bunden af infoskærmen.
-    </p>
+<table>
+
+    <tr>
+
+        <th>
+            Tekstbesked
+        </th>
+
+        <th>
+            Handling
+        </th>
+
+    </tr>
 
 
-    {% if nyheder %}
+    {% for nyhed in nyheder %}
 
-        <table>
+    <tr>
 
-            <thead>
-
-                <tr>
-
-                    <th>
-                        Tekstbesked
-                    </th>
-
-                    <th>
-                        Handling
-                    </th>
-
-                </tr>
-
-            </thead>
+        <td>
+            {{ nyhed.tekst }}
+        </td>
 
 
-            <tbody>
+        <td>
 
-                {% for nyhed in nyheder %}
+            <a
+                href="/slet-nyhed/{{ nyhed.id }}"
+                class="slet-knap"
 
-                    <tr>
+                onclick="
+                    return confirm(
+                        'Vil du slette denne nyhed?'
+                    )
+                "
+            >
+                Slet
+            </a>
 
-                        <td>
-                            {{ nyhed.tekst }}
-                        </td>
+        </td>
 
+    </tr>
 
-                        <td>
+    {% endfor %}
 
-                            <a
-                                href="/slet-nyhed/{{ nyhed.id }}"
-                                class="slet-knap"
-
-                                onclick="
-                                    return confirm(
-                                        'Vil du slette denne nyhed?'
-                                    )
-                                "
-                            >
-                                Slet
-                            </a>
-
-                        </td>
-
-                    </tr>
-
-                {% endfor %}
-
-            </tbody>
-
-        </table>
-
-    {% else %}
-
-        <div class="empty">
-
-            Ingen lokale nyheder oprettet.
-
-        </div>
-
-    {% endif %}
-
-</div>
-
+</table>
 
 
 <!-- ============================================================
      MEDIER
      ============================================================ -->
 
-<div class="section">
+<h2>
+    Nuværende medier
+</h2>
 
-    <h2>
-        🖼️ Nuværende medier
-    </h2>
 
+<p>
+    Her kan du aktivere/deaktivere medier
+    og ændre deres udløbsdato.
+</p>
 
-    <p class="section-info">
 
-        Her kan du aktivere/deaktivere medier,
-        ændre udløbsdato eller slette dem.
+<div class="media-grid">
 
-    </p>
 
+{% for medie in medier %}
 
-    {% if medier %}
 
-        <div class="media-grid">
+    <div class="media-card">
 
 
-            {% for medie in medier %}
+        <!-- ====================================================
+             PREVIEW
+             ==================================================== -->
 
-                <div class="media-card">
+        {% if
+            medie.filnavn.lower().endswith('.mp4')
+            or medie.filnavn.lower().endswith('.webm')
+            or medie.filnavn.lower().endswith('.mov')
+        %}
 
 
-                    <!-- ========================================
-                         PREVIEW
-                         ======================================== -->
+            <video
 
-                    {% if
-                        medie.filnavn.lower().endswith('.mp4')
-                        or medie.filnavn.lower().endswith('.webm')
-                        or medie.filnavn.lower().endswith('.mov')
-                    %}
+                src="/uploads/{{ medie.filnavn }}"
 
-                        <video
-                            src="/uploads/{{ medie.filnavn }}"
-                            class="media-card-preview"
-                            muted
-                            controls
-                        ></video>
+                class="media-card-preview"
 
-                    {% else %}
+                muted
 
-                        <img
-                            src="/uploads/{{ medie.filnavn }}"
-                            class="media-card-preview"
-                            alt="Preview"
-                        >
+                controls
 
-                    {% endif %}
+            ></video>
 
 
+        {% else %}
 
-                    <!-- ========================================
-                         FILNAVN
-                         ======================================== -->
 
-                    <div class="media-card-title">
+            <img
 
-                        {{ medie.filnavn }}
+                src="/uploads/{{ medie.filnavn }}"
 
-                    </div>
+                alt="Preview"
 
+                class="media-card-preview"
 
+            >
 
-                    <!-- ========================================
-                         STATUS
-                         ======================================== -->
 
-                    {% if medie.aktiv != 1 %}
+        {% endif %}
 
-                        <div
-                            class="
-                                media-status
-                                status-deaktiveret
-                            "
-                        >
-                            ⚫ DEAKTIVERET
-                        </div>
 
+        <!-- ====================================================
+             FILNAVN
+             ==================================================== -->
 
-                    {% elif not medie.udloebs_dato %}
+        <div class="media-card-title">
 
-                        <div
-                            class="
-                                media-status
-                                status-aktiv
-                            "
-                        >
-                            🟢 AKTIV -
-                            UDLØBER ALDRIG
-                        </div>
+            {{ medie.filnavn }}
 
+        </div>
 
-                    {% elif medie.udloebs_dato < current_date %}
 
-                        <div
-                            class="
-                                media-status
-                                status-udloebet
-                            "
-                        >
-                            🔴 UDLØBET
-                        </div>
+        <!-- ====================================================
+             STATUS
+             ==================================================== -->
 
+        {% if medie.aktiv != 1 %}
 
-                    {% elif medie.udloebs_dato == current_date %}
 
-                        <div
-                            class="
-                                media-status
-                                status-udloebes-i-dag
-                            "
-                        >
-                            🟠 UDLØBER I DAG
-                        </div>
+            <div
+                class="media-status status-deaktiveret"
+            >
+                ⚫ DEAKTIVERET
+            </div>
 
 
-                    {% else %}
+        {% elif not medie.udloebs_dato %}
 
-                        <div
-                            class="
-                                media-status
-                                status-aktiv
-                            "
-                        >
-                            🟢 AKTIV
-                        </div>
 
-                    {% endif %}
+            <div
+                class="media-status status-aktiv"
+            >
+                🟢 AKTIV – UDLØBER ALDRIG
+            </div>
 
 
+        {% elif medie.udloebs_dato < current_date %}
 
-                    <!-- ========================================
-                         UDLØBSDATO
-                         ======================================== -->
 
-                    <div class="udloeb-container">
+            <div
+                class="media-status status-udloebet"
+            >
+                🔴 UDLØBET
+            </div>
 
-                        <form
-                            action="/aendre-udloeb/{{ medie.id }}"
-                            method="POST"
-                        >
 
-                            <label
-                                for="udloeb_{{ medie.id }}"
-                            >
-                                Udløbsdato:
-                            </label>
+        {% elif medie.udloebs_dato == current_date %}
 
 
-                            <input
-                                type="date"
-                                id="udloeb_{{ medie.id }}"
-                                name="udloeb_dato"
-                                value="{{ medie.udloebs_dato or '' }}"
-                            >
+            <div
+                class="media-status status-udloebes-i-dag"
+            >
+                🟠 UDLØBER I DAG
+            </div>
 
 
-                            <button
-                                type="submit"
-                                class="dato-knap"
-                            >
-                                Gem udløbsdato
-                            </button>
+        {% else %}
 
-                        </form>
 
+            <div
+                class="media-status status-aktiv"
+            >
+                🟢 AKTIV
+            </div>
 
-                        {% if medie.udloebs_dato %}
 
-                            <div class="udloeb-info">
+        {% endif %}
 
-                                Udløber:
-                                {{ medie.udloebs_dato }}
 
-                            </div>
+        <!-- ====================================================
+             UDLØBSDATO
+             ==================================================== -->
 
-                        {% else %}
+        <div class="udloeb-container">
 
-                            <div
-                                class="
-                                    udloeb-info
-                                    udloeb-aldrig
-                                "
-                            >
 
-                                Udløber aldrig
+            <form
+                action="/aendre-udloeb/{{ medie.id }}"
+                method="POST"
+            >
 
-                            </div>
+                <label
+                    for="udloeb_{{ medie.id }}"
+                >
+                    Udløbsdato:
+                </label>
 
-                        {% endif %}
 
-                    </div>
+                <input
 
+                    type="date"
 
+                    id="udloeb_{{ medie.id }}"
 
-                    <!-- ========================================
-                         KONTROLLER
-                         ======================================== -->
+                    name="udloeb_dato"
 
-                    <div class="media-card-controls">
+                    value="{{ medie.udloebs_dato or '' }}"
 
+                >
 
-                        <label>
 
-                            <input
-                                type="checkbox"
-                                class="status-checkbox"
-                                data-id="{{ medie.id }}"
+                <button
+                    type="submit"
+                    class="dato-knap"
+                >
+                    Gem udløbsdato
+                </button>
 
-                                {% if medie.aktiv == 1 %}
-                                    checked
-                                {% endif %}
+            </form>
 
-                                onchange="
-                                    opdaterStatus(this)
-                                "
-                            >
 
-                            Vis på skærm
+            {% if medie.udloebs_dato %}
 
-                        </label>
+                <div
+                    style="
+                        font-size: 11px;
+                        color: #777;
+                        margin-top: 6px;
+                    "
+                >
 
-
-                        <a
-                            href="/slet/{{ medie.id }}"
-                            class="slet-knap"
-
-                            onclick="
-                                return confirm(
-                                    'Vil du slette filen helt?'
-                                )
-                            "
-                        >
-                            Slet
-                        </a>
-
-                    </div>
-
+                    Udløber:
+                    {{ medie.udloebs_dato }}
 
                 </div>
 
-            {% endfor %}
+            {% else %}
+
+                <div
+                    style="
+                        font-size: 11px;
+                        color: #28a745;
+                        margin-top: 6px;
+                    "
+                >
+
+                    Udløber aldrig
+
+                </div>
+
+            {% endif %}
+
 
         </div>
 
-    {% else %}
 
-        <div class="empty">
+        <!-- ====================================================
+             KONTROLLER
+             ==================================================== -->
 
-            Ingen medier uploadet endnu.
+        <div class="media-card-controls">
+
+
+            <label>
+
+                <input
+
+                    type="checkbox"
+
+                    class="status-checkbox"
+
+                    data-id="{{ medie.id }}"
+
+                    {% if medie.aktiv == 1 %}
+                        checked
+                    {% endif %}
+
+                    onchange="opdaterStatus(this)"
+
+                >
+
+
+                Vis på skærm
+
+            </label>
+
+
+            <a
+
+                href="/slet/{{ medie.id }}"
+
+                class="slet-knap"
+
+                onclick="
+                    return confirm(
+                        'Vil du slette filen helt?'
+                    )
+                "
+
+            >
+                Slet
+            </a>
+
 
         </div>
 
-    {% endif %}
+
+    </div>
+
+
+{% endfor %}
+
 
 </div>
-
 
 
 <!-- ============================================================
@@ -1281,6 +1154,7 @@
      ============================================================ -->
 
 <script>
+
 
 async function opdaterStatus(checkbox) {
 
@@ -1300,6 +1174,7 @@ async function opdaterStatus(checkbox) {
             await fetch(
                 `/skift-status/${id}`,
                 {
+
                     method: "POST",
 
                     headers: {
@@ -1311,6 +1186,7 @@ async function opdaterStatus(checkbox) {
                         JSON.stringify({
                             aktiv: erAktiv
                         })
+
                 }
             );
 
@@ -1325,26 +1201,25 @@ async function opdaterStatus(checkbox) {
                 !erAktiv;
 
             return;
-
         }
 
 
         /*
-         * Opdater siden efter
-         * succes så statusboksen
-         * bliver korrekt.
+         * Vi genindlæser siden,
+         * så statusfarven bliver
+         * opdateret.
          */
 
         location.reload();
 
 
-    } catch (error) {
+    }
+    catch (error) {
 
         console.error(
             "Fejl:",
             error
         );
-
 
         checkbox.checked =
             !erAktiv;
