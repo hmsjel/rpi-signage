@@ -13,7 +13,8 @@ from flask import (
     redirect,
     url_for,
     send_from_directory,
-    jsonify
+    jsonify,
+    session
 )
 
 
@@ -22,6 +23,16 @@ from flask import (
 # ============================================================
 
 app = Flask(__name__)
+
+app.secret_key = "skift-denne-til-en-lang-hemmelig-noegle"
+
+
+# ============================================================
+# ADMIN LOGIN
+# ============================================================
+
+ADMIN_BRUGERNAVN = "admin"
+ADMIN_KODE = "1234"
 
 
 # ============================================================
@@ -57,7 +68,13 @@ ALLOWED_EXTENSIONS = {
 }
 
 
+# ============================================================
+# STANDARDINDSTILLINGER
+# ============================================================
+
 DEFAULT_BILLED_SEKUNDER = 12
+
+DEFAULT_TICKER_SEKUNDER = 45
 
 
 # ============================================================
@@ -65,8 +82,10 @@ DEFAULT_BILLED_SEKUNDER = 12
 # ============================================================
 
 VEJR_BY = "Skovgaarde"
-VEJR_LATITUDE = 56.50941163
-VEJR_LONGITUDE = 10.5417551
+
+VEJR_LATITUDE = "56.50941163"
+
+VEJR_LONGITUDE = "10.5417551"
 
 
 # ============================================================
@@ -83,6 +102,7 @@ DR_RSS_URL = (
 # ============================================================
 
 VEJR_CACHE_SEKUNDER = 300
+
 NYHED_CACHE_SEKUNDER = 300
 
 
@@ -129,9 +149,9 @@ def init_db():
 
     try:
 
-        # ----------------------------------------------------
+        # ====================================================
         # MEDIER
-        # ----------------------------------------------------
+        # ====================================================
 
         conn.execute("""
             CREATE TABLE IF NOT EXISTS medier (
@@ -142,10 +162,10 @@ def init_db():
             )
         """)
 
-        # ----------------------------------------------------
-        # SIKKERHED:
-        # Sørg for at udloebs_dato findes
-        # ----------------------------------------------------
+
+        # ====================================================
+        # SIKR AT UDLØBSDATO FINDES
+        # ====================================================
 
         kolonner = conn.execute(
             "PRAGMA table_info(medier)"
@@ -163,9 +183,10 @@ def init_db():
                 ADD COLUMN udloebs_dato TEXT
             """)
 
-        # ----------------------------------------------------
+
+        # ====================================================
         # TICKER
-        # ----------------------------------------------------
+        # ====================================================
 
         conn.execute("""
             CREATE TABLE IF NOT EXISTS ticker (
@@ -174,9 +195,10 @@ def init_db():
             )
         """)
 
-        # ----------------------------------------------------
+
+        # ====================================================
         # INDSTILLINGER
-        # ----------------------------------------------------
+        # ====================================================
 
         conn.execute("""
             CREATE TABLE IF NOT EXISTS indstillinger (
@@ -186,9 +208,10 @@ def init_db():
             )
         """)
 
-        # ----------------------------------------------------
-        # STANDARD BILLEDHASTIGHED
-        # ----------------------------------------------------
+
+        # ====================================================
+        # BILLEDHASTIGHED
+        # ====================================================
 
         conn.execute("""
             INSERT OR IGNORE INTO indstillinger
@@ -199,6 +222,63 @@ def init_db():
             str(DEFAULT_BILLED_SEKUNDER)
         ))
 
+
+        # ====================================================
+        # TICKER HASTIGHED
+        # ====================================================
+
+        conn.execute("""
+            INSERT OR IGNORE INTO indstillinger
+            (nogle, vaerdi)
+            VALUES (?, ?)
+        """, (
+            "ticker_sekunder",
+            str(DEFAULT_TICKER_SEKUNDER)
+        ))
+
+
+        # ====================================================
+        # VEJR BY
+        # ====================================================
+
+        conn.execute("""
+            INSERT OR IGNORE INTO indstillinger
+            (nogle, vaerdi)
+            VALUES (?, ?)
+        """, (
+            "vejr_by",
+            VEJR_BY
+        ))
+
+
+        # ====================================================
+        # VEJR LAT
+        # ====================================================
+
+        conn.execute("""
+            INSERT OR IGNORE INTO indstillinger
+            (nogle, vaerdi)
+            VALUES (?, ?)
+        """, (
+            "vejr_lat",
+            VEJR_LATITUDE
+        ))
+
+
+        # ====================================================
+        # VEJR LON
+        # ====================================================
+
+        conn.execute("""
+            INSERT OR IGNORE INTO indstillinger
+            (nogle, vaerdi)
+            VALUES (?, ?)
+        """, (
+            "vejr_lon",
+            VEJR_LONGITUDE
+        ))
+
+
         conn.commit()
 
     finally:
@@ -206,12 +286,27 @@ def init_db():
         conn.close()
 
 
-# Initialiser database
+# ============================================================
+# INITIALISER DATABASE
+# ============================================================
+
 init_db()
 
 
 # ============================================================
-# HJÆLPEFUNKTIONER
+# LOGIN HJÆLPER
+# ============================================================
+
+def er_logget_ind():
+
+    return session.get(
+        "logget_ind",
+        False
+    )
+
+
+# ============================================================
+# FILTYPE
 # ============================================================
 
 def allowed_file(filename):
@@ -231,32 +326,73 @@ def allowed_file(filename):
 
 
 # ============================================================
-# BILLEDHASTIGHED
+# HENT INDSTILLING
 # ============================================================
 
-def get_billed_sekunder(conn):
+def get_indstilling(
+    conn,
+    nogle,
+    default
+):
 
     row = conn.execute("""
         SELECT vaerdi
         FROM indstillinger
         WHERE nogle = ?
     """, (
-        "billed_sekunder",
+        nogle,
     )).fetchone()
 
     if not row:
 
-        return DEFAULT_BILLED_SEKUNDER
+        return default
+
+    return row["vaerdi"]
+
+
+# ============================================================
+# GEM INDSTILLING
+# ============================================================
+
+def set_indstilling(
+    conn,
+    nogle,
+    vaerdi
+):
+
+    conn.execute("""
+        INSERT INTO indstillinger
+        (nogle, vaerdi)
+        VALUES (?, ?)
+        ON CONFLICT(nogle)
+        DO UPDATE SET vaerdi = excluded.vaerdi
+    """, (
+        nogle,
+        str(vaerdi)
+    ))
+
+
+# ============================================================
+# BILLEDHASTIGHED
+# ============================================================
+
+def get_billed_sekunder(conn):
+
+    value = get_indstilling(
+        conn,
+        "billed_sekunder",
+        str(DEFAULT_BILLED_SEKUNDER)
+    )
 
     try:
 
-        sekunder = int(
-            row["vaerdi"]
-        )
+        sekunder = int(value)
 
         if sekunder < 1:
-
             return DEFAULT_BILLED_SEKUNDER
+
+        if sekunder > 120:
+            return 120
 
         return sekunder
 
@@ -266,6 +402,38 @@ def get_billed_sekunder(conn):
     ):
 
         return DEFAULT_BILLED_SEKUNDER
+
+
+# ============================================================
+# TICKER HASTIGHED
+# ============================================================
+
+def get_ticker_sekunder(conn):
+
+    value = get_indstilling(
+        conn,
+        "ticker_sekunder",
+        str(DEFAULT_TICKER_SEKUNDER)
+    )
+
+    try:
+
+        sekunder = int(value)
+
+        if sekunder < 5:
+            return DEFAULT_TICKER_SEKUNDER
+
+        if sekunder > 300:
+            return 300
+
+        return sekunder
+
+    except (
+        ValueError,
+        TypeError
+    ):
+
+        return DEFAULT_TICKER_SEKUNDER
 
 
 # ============================================================
@@ -292,61 +460,81 @@ def hent_lokale_nyheder(conn):
 
 def hent_vejr():
 
-    by = "Skovgaarde"
-    latitude = "56.50941163"
-    longitude = "10.5417551"
+    global weather_cache
+
+    now = time.time()
+
+
+    # ========================================================
+    # CACHE
+    # ========================================================
+
+    if (
+        weather_cache["data"] is not None
+        and
+        now - weather_cache["timestamp"]
+        < VEJR_CACHE_SEKUNDER
+    ):
+
+        return weather_cache["data"]
+
+
+    # ========================================================
+    # STANDARD
+    # ========================================================
+
+    by = VEJR_BY
+
+    latitude = VEJR_LATITUDE
+
+    longitude = VEJR_LONGITUDE
 
     temperatur = "--°C"
+
     beskrivelse = "Henter vejr..."
+
     ikon = "cloud-sun"
 
-    # --------------------------------------------------------
-    # Hent valgt lokation fra databasen
-    # --------------------------------------------------------
+
+    # ========================================================
+    # HENT VEJRINDSTILLINGER
+    # ========================================================
 
     try:
 
         conn = get_db_connection()
 
-        by_row = conn.execute("""
-            SELECT vaerdi
-            FROM indstillinger
-            WHERE nogle = "vejr_by"
-        """).fetchone()
+        by = get_indstilling(
+            conn,
+            "vejr_by",
+            VEJR_BY
+        )
 
-        lat_row = conn.execute("""
-            SELECT vaerdi
-            FROM indstillinger
-            WHERE nogle = "vejr_lat"
-        """).fetchone()
+        latitude = get_indstilling(
+            conn,
+            "vejr_lat",
+            VEJR_LATITUDE
+        )
 
-        lon_row = conn.execute("""
-            SELECT vaerdi
-            FROM indstillinger
-            WHERE nogle = "vejr_lon"
-        """).fetchone()
+        longitude = get_indstilling(
+            conn,
+            "vejr_lon",
+            VEJR_LONGITUDE
+        )
 
         conn.close()
-
-        if by_row:
-            by = by_row["vaerdi"]
-
-        if lat_row:
-            latitude = lat_row["vaerdi"]
-
-        if lon_row:
-            longitude = lon_row["vaerdi"]
 
     except Exception as error:
 
         print(
-            "Kunne ikke hente vejr-indstillinger:",
+            "Kunne ikke hente vejrindstillinger:",
             error
         )
 
-    # --------------------------------------------------------
-    # Vejrkoder
-    # --------------------------------------------------------
+
+    # ========================================================
+    # VEJRBESKRIVELSER
+    # ========================================================
 
     weather_codes = {
 
@@ -379,9 +567,10 @@ def hent_vejr():
         99: "Kraftigt tordenvejr med hagl"
     }
 
-    # --------------------------------------------------------
-    # Vejrikoner
-    # --------------------------------------------------------
+
+    # ========================================================
+    # VEJRIKONER
+    # ========================================================
 
     weather_icons = {
 
@@ -414,9 +603,10 @@ def hent_vejr():
         99: "cloud-hail-fill"
     }
 
-    # --------------------------------------------------------
-    # Hent vejret fra Open-Meteo
-    # --------------------------------------------------------
+
+    # ========================================================
+    # HENT VEJR
+    # ========================================================
 
     try:
 
@@ -442,6 +632,7 @@ def hent_vejr():
             {}
         )
 
+
         if current:
 
             grader = round(
@@ -453,19 +644,23 @@ def hent_vejr():
 
             temperatur = f"{grader}°C"
 
+
             code = current.get(
                 "weather_code"
             )
+
 
             beskrivelse = weather_codes.get(
                 code,
                 "Skiftende vejr"
             )
 
+
             ikon = weather_icons.get(
                 code,
                 "cloud-sun"
             )
+
 
     except Exception as error:
 
@@ -474,12 +669,22 @@ def hent_vejr():
             error
         )
 
-    return (
+
+    resultat = (
         by,
         temperatur,
         beskrivelse,
         ikon
     )
+
+
+    weather_cache = {
+        "timestamp": now,
+        "data": resultat
+    }
+
+
+    return resultat
 
 
 # ============================================================
@@ -492,9 +697,6 @@ def hent_dr_nyheder():
 
     now = time.time()
 
-    # --------------------------------------------------------
-    # Brug cache hvis den stadig er gyldig
-    # --------------------------------------------------------
 
     if (
         now - news_cache["timestamp"]
@@ -503,11 +705,14 @@ def hent_dr_nyheder():
 
         return news_cache["data"]
 
+
     nyheder = []
+
 
     headers = {
         "User-Agent": "Infoscreen/1.0"
     }
+
 
     try:
 
@@ -519,9 +724,11 @@ def hent_dr_nyheder():
 
         response.raise_for_status()
 
+
         feed = feedparser.parse(
             response.content
         )
+
 
         for entry in feed.entries[:5]:
 
@@ -529,11 +736,13 @@ def hent_dr_nyheder():
                 "title"
             )
 
+
             if titel:
 
                 nyheder.append(
                     f"++ DR NYHEDER: {titel} ++"
                 )
+
 
     except Exception as error:
 
@@ -541,16 +750,81 @@ def hent_dr_nyheder():
             f"Kunne ikke hente DR RSS: {error}"
         )
 
+
         if news_cache["data"]:
 
             return news_cache["data"]
+
 
     news_cache = {
         "timestamp": now,
         "data": nyheder
     }
 
+
     return nyheder
+
+
+# ============================================================
+# LOGIN
+# ============================================================
+
+@app.route(
+    "/login",
+    methods=["GET", "POST"]
+)
+def login():
+
+    if request.method == "POST":
+
+        brugernavn = request.form.get(
+            "brugernavn",
+            ""
+        ).strip()
+
+        kode = request.form.get(
+            "kode",
+            ""
+        ).strip()
+
+
+        if (
+            brugernavn == ADMIN_BRUGERNAVN
+            and kode == ADMIN_KODE
+        ):
+
+            session["logget_ind"] = True
+
+            return redirect(
+                url_for("admin")
+            )
+
+
+        return render_template(
+            "login.html",
+            fejl="Forkert brugernavn eller kode"
+        )
+
+
+    return render_template(
+        "login.html"
+    )
+
+
+# ============================================================
+# LOGOUT
+# ============================================================
+
+@app.route(
+    "/logout"
+)
+def logout():
+
+    session.clear()
+
+    return redirect(
+        url_for("login")
+    )
 
 
 # ============================================================
@@ -568,12 +842,9 @@ def skaerm():
             "%Y-%m-%d"
         )
 
-        # ----------------------------------------------------
-        # Kun aktive medier der ikke er udløbet
-        # ----------------------------------------------------
 
         aktive_medier = conn.execute("""
-            SELECT filnavn
+            SELECT *
             FROM medier
             WHERE aktiv = 1
             AND (
@@ -586,17 +857,34 @@ def skaerm():
             idag,
         )).fetchall()
 
+
         lokale_nyheder = hent_lokale_nyheder(
             conn
         )
+
 
         billed_sekunder = get_billed_sekunder(
             conn
         )
 
+
+        ticker_sekunder = get_ticker_sekunder(
+            conn
+        )
+
+
     finally:
 
         conn.close()
+
+
+    (
+        by,
+        temperatur,
+        beskrivelse,
+        ikon
+    ) = hent_vejr()
+
 
     return render_template(
         "skaerm.html",
@@ -605,15 +893,17 @@ def skaerm():
 
         nyheder=lokale_nyheder,
 
-        temp="--°C",
+        temp=temperatur,
 
-        beskrivelse="Henter vejr...",
+        beskrivelse=beskrivelse,
 
-        by=VEJR_BY,
+        by=by,
 
         sekunder=billed_sekunder,
 
-        ikon="cloud-sun"
+        ticker_sekunder=ticker_sekunder,
+
+        ikon=ikon
     )
 
 
@@ -627,11 +917,16 @@ def skaerm():
 )
 def admin():
 
-    conn = get_db_connection()
+    if not er_logget_ind():
 
-    # --------------------------------------------------------
-    # Byer
-    # --------------------------------------------------------
+        return redirect(
+            url_for("login")
+        )
+
+
+    # ========================================================
+    # BYER
+    # ========================================================
 
     byer_koordinater = {
 
@@ -676,215 +971,283 @@ def admin():
         }
     }
 
-    # --------------------------------------------------------
-    # POST
-    # --------------------------------------------------------
 
-    if request.method == "POST":
+    conn = get_db_connection()
 
-        # ====================================================
-        # 1. NY TICKER-TEKST
-        # ====================================================
 
-        if "nyhed_tekst" in request.form:
+    try:
 
-            tekst = request.form[
-                "nyhed_tekst"
-            ].strip()
+        if request.method == "POST":
 
-            if tekst:
 
-                conn.execute("""
-                    INSERT INTO ticker (tekst)
-                    VALUES (?)
-                """, (
-                    tekst,
-                ))
+            # =================================================
+            # NY TICKER TEKST
+            # =================================================
 
-                conn.commit()
+            if "nyhed_tekst" in request.form:
 
-        # ====================================================
-        # 2. UPLOAD MEDIE
-        # ====================================================
+                tekst = request.form.get(
+                    "nyhed_tekst",
+                    ""
+                ).strip()
 
-        elif "medie_fil" in request.files:
 
-            fil = request.files[
-                "medie_fil"
-            ]
-
-            udloeb = request.form.get(
-                "udloeb_dato",
-                ""
-            ).strip()
-
-            if fil and fil.filename:
-
-                filnavn = fil.filename
-
-                if allowed_file(
-                    filnavn
-                ):
-
-                    fil.save(
-                        os.path.join(
-                            app.config[
-                                "UPLOAD_FOLDER"
-                            ],
-                            filnavn
-                        )
-                    )
+                if tekst:
 
                     conn.execute("""
-                        INSERT INTO medier
-                        (
-                            filnavn,
-                            aktiv,
-                            udloebs_dato
-                        )
-                        VALUES (?, 1, ?)
+                        INSERT INTO ticker (tekst)
+                        VALUES (?)
                     """, (
-                        filnavn,
-                        udloeb
+                        tekst,
                     ))
 
                     conn.commit()
 
-        # ====================================================
-        # 3. BILLEDHASTIGHED
-        # ====================================================
 
-        elif "billed_sekunder" in request.form:
+            # =================================================
+            # UPLOAD MEDIE
+            # =================================================
 
-            sekunder = request.form[
-                "billed_sekunder"
-            ].strip()
+            elif "medie_fil" in request.files:
 
-            if sekunder:
+                fil = request.files[
+                    "medie_fil"
+                ]
 
-                conn.execute("""
-                    UPDATE indstillinger
-                    SET vaerdi = ?
-                    WHERE nogle = "billed_sekunder"
-                """, (
-                    sekunder,
-                ))
 
-                conn.commit()
+                udloeb = request.form.get(
+                    "udloeb_dato",
+                    ""
+                ).strip()
 
-        # ====================================================
-        # 4. VEJR BY
-        # ====================================================
 
-        elif "valgt_by" in request.form:
+                if fil and fil.filename:
 
-            by_navn = request.form[
-                "valgt_by"
-            ]
+                    filnavn = os.path.basename(
+                        fil.filename
+                    )
 
-            if by_navn in byer_koordinater:
 
-                conn.execute("""
-                    INSERT OR IGNORE INTO indstillinger
-                    (nogle, vaerdi)
-                    VALUES ("vejr_by", "Skovgaarde")
-                """)
+                    if allowed_file(
+                        filnavn
+                    ):
 
-                conn.execute("""
-                    INSERT OR IGNORE INTO indstillinger
-                    (nogle, vaerdi)
-                    VALUES ("vejr_lat", "56.50941163")
-                """)
+                        fil.save(
+                            os.path.join(
+                                app.config[
+                                    "UPLOAD_FOLDER"
+                                ],
+                                filnavn
+                            )
+                        )
 
-                conn.execute("""
-                    INSERT OR IGNORE INTO indstillinger
-                    (nogle, vaerdi)
-                    VALUES ("vejr_lon", "10.5417551")
-                """)
 
-                conn.execute("""
-                    UPDATE indstillinger
-                    SET vaerdi = ?
-                    WHERE nogle = "vejr_by"
-                """, (
-                    by_navn,
-                ))
+                        conn.execute("""
+                            INSERT INTO medier
+                            (
+                                filnavn,
+                                aktiv,
+                                udloebs_dato
+                            )
+                            VALUES (?, 1, ?)
+                        """, (
+                            filnavn,
+                            udloeb if udloeb else None
+                        ))
 
-                conn.execute("""
-                    UPDATE indstillinger
-                    SET vaerdi = ?
-                    WHERE nogle = "vejr_lat"
-                """, (
-                    byer_koordinater[
+
+                        conn.commit()
+
+
+            # =================================================
+            # BILLEDHASTIGHED
+            # =================================================
+
+            elif "billed_sekunder" in request.form:
+
+                sekunder = request.form.get(
+                    "billed_sekunder",
+                    ""
+                ).strip()
+
+
+                try:
+
+                    sekunder_int = int(
+                        sekunder
+                    )
+
+
+                    if 1 <= sekunder_int <= 120:
+
+                        set_indstilling(
+                            conn,
+                            "billed_sekunder",
+                            sekunder_int
+                        )
+
+                        conn.commit()
+
+
+                except ValueError:
+
+                    pass
+
+
+            # =================================================
+            # TICKER HASTIGHED
+            # =================================================
+
+            elif "ticker_sekunder" in request.form:
+
+                sekunder = request.form.get(
+                    "ticker_sekunder",
+                    ""
+                ).strip()
+
+
+                try:
+
+                    sekunder_int = int(
+                        sekunder
+                    )
+
+
+                    if 5 <= sekunder_int <= 300:
+
+                        set_indstilling(
+                            conn,
+                            "ticker_sekunder",
+                            sekunder_int
+                        )
+
+                        conn.commit()
+
+
+                except ValueError:
+
+                    pass
+
+
+            # =================================================
+            # VEJR
+            # =================================================
+
+            elif "valgt_by" in request.form:
+
+                by_navn = request.form.get(
+                    "valgt_by",
+                    ""
+                )
+
+
+                if by_navn in byer_koordinater:
+
+                    set_indstilling(
+                        conn,
+                        "vejr_by",
                         by_navn
-                    ]["lat"],
-                ))
+                    )
 
-                conn.execute("""
-                    UPDATE indstillinger
-                    SET vaerdi = ?
-                    WHERE nogle = "vejr_lon"
-                """, (
-                    byer_koordinater[
-                        by_navn
-                    ]["lon"],
-                ))
 
-                conn.commit()
+                    set_indstilling(
+                        conn,
+                        "vejr_lat",
+                        byer_koordinater[
+                            by_navn
+                        ]["lat"]
+                    )
 
-        return redirect(
-            url_for("admin")
+
+                    set_indstilling(
+                        conn,
+                        "vejr_lon",
+                        byer_koordinater[
+                            by_navn
+                        ]["lon"]
+                    )
+
+
+                    conn.commit()
+
+
+                global weather_cache
+
+                weather_cache = {
+                    "timestamp": 0,
+                    "data": None
+                }
+
+
+            return redirect(
+                url_for("admin")
+            )
+
+
+        # ====================================================
+        # MEDIER
+        # ====================================================
+
+        alle_medier = conn.execute("""
+            SELECT *
+            FROM medier
+            ORDER BY id ASC
+        """).fetchall()
+
+
+        # ====================================================
+        # NYHEDER
+        # ====================================================
+
+        alle_nyheder = conn.execute("""
+            SELECT *
+            FROM ticker
+            ORDER BY id ASC
+        """).fetchall()
+
+
+        # ====================================================
+        # BILLEDHASTIGHED
+        # ====================================================
+
+        billed_sekunder = get_billed_sekunder(
+            conn
         )
 
+
+        # ====================================================
+        # TICKER HASTIGHED
+        # ====================================================
+
+        ticker_sekunder = get_ticker_sekunder(
+            conn
+        )
+
+
+        # ====================================================
+        # VEJR BY
+        # ====================================================
+
+        nuvaerende_by = get_indstilling(
+            conn,
+            "vejr_by",
+            VEJR_BY
+        )
+
+
+    finally:
+
+        conn.close()
+
+
     # ========================================================
-    # DATA TIL ADMIN
+    # DATO
     # ========================================================
-
-    alle_medier = conn.execute("""
-        SELECT *
-        FROM medier
-        ORDER BY id ASC
-    """).fetchall()
-
-    alle_nyheder = conn.execute("""
-        SELECT *
-        FROM ticker
-        ORDER BY id ASC
-    """).fetchall()
-
-    hastighed_row = conn.execute("""
-        SELECT vaerdi
-        FROM indstillinger
-        WHERE nogle = "billed_sekunder"
-    """).fetchone()
-
-    billed_sekunder = (
-        hastighed_row["vaerdi"]
-        if hastighed_row
-        else "12"
-    )
-
-    by_row = conn.execute("""
-        SELECT vaerdi
-        FROM indstillinger
-        WHERE nogle = "vejr_by"
-    """).fetchone()
-
-    nuvaerende_by = (
-        by_row["vaerdi"]
-        if by_row
-        else "Skovgaarde"
-    )
-
-    conn.close()
-
-    # --------------------------------------------------------
-    # Dagens dato til admin.html
-    # --------------------------------------------------------
 
     current_date = datetime.now().strftime(
         "%Y-%m-%d"
     )
+
 
     return render_template(
         "admin.html",
@@ -894,6 +1257,8 @@ def admin():
         nyheder=alle_nyheder,
 
         nuvaerende_sekunder=billed_sekunder,
+
+        nuvaerende_ticker_sekunder=ticker_sekunder,
 
         nuvaerende_by=nuvaerende_by,
 
@@ -915,9 +1280,18 @@ def admin():
 )
 def skift_status(id):
 
+    if not er_logget_ind():
+
+        return jsonify(
+            success=False,
+            error="Ikke logget ind"
+        ), 401
+
+
     data = request.get_json(
         silent=True
     )
+
 
     if not data:
 
@@ -926,13 +1300,16 @@ def skift_status(id):
             error="Ingen data modtaget"
         ), 400
 
+
     ny_status = (
         1
         if data.get("aktiv")
         else 0
     )
 
+
     conn = get_db_connection()
+
 
     try:
 
@@ -945,7 +1322,9 @@ def skift_status(id):
             id
         ))
 
+
         conn.commit()
+
 
         if cursor.rowcount == 0:
 
@@ -954,9 +1333,11 @@ def skift_status(id):
                 error="Medie ikke fundet"
             ), 404
 
+
     finally:
 
         conn.close()
+
 
     return jsonify(
         success=True
@@ -973,21 +1354,28 @@ def skift_status(id):
 )
 def aendre_udloeb(id):
 
+    if not er_logget_ind():
+
+        return redirect(
+            url_for("login")
+        )
+
+
     udloeb = request.form.get(
         "udloeb_dato",
         ""
     ).strip()
 
+
+    if not udloeb:
+
+        udloeb = None
+
+
     conn = get_db_connection()
 
+
     try:
-
-        # Tom dato betyder:
-        # Ingen udløbsdato
-
-        if not udloeb:
-
-            udloeb = None
 
         cursor = conn.execute("""
             UPDATE medier
@@ -998,7 +1386,9 @@ def aendre_udloeb(id):
             id
         ))
 
+
         conn.commit()
+
 
         if cursor.rowcount == 0:
 
@@ -1007,9 +1397,11 @@ def aendre_udloeb(id):
                 404
             )
 
+
     finally:
 
         conn.close()
+
 
     return redirect(
         url_for("admin")
@@ -1025,7 +1417,15 @@ def aendre_udloeb(id):
 )
 def slet(id):
 
+    if not er_logget_ind():
+
+        return redirect(
+            url_for("login")
+        )
+
+
     conn = get_db_connection()
+
 
     try:
 
@@ -1037,6 +1437,7 @@ def slet(id):
             id,
         )).fetchone()
 
+
         if medie:
 
             filsti = os.path.join(
@@ -1045,6 +1446,7 @@ def slet(id):
                 ],
                 medie["filnavn"]
             )
+
 
             try:
 
@@ -1056,6 +1458,7 @@ def slet(id):
 
                 pass
 
+
             conn.execute("""
                 DELETE FROM medier
                 WHERE id = ?
@@ -1063,11 +1466,14 @@ def slet(id):
                 id,
             ))
 
+
             conn.commit()
+
 
     finally:
 
         conn.close()
+
 
     return redirect(
         url_for("admin")
@@ -1083,7 +1489,15 @@ def slet(id):
 )
 def slet_nyhed(id):
 
+    if not er_logget_ind():
+
+        return redirect(
+            url_for("login")
+        )
+
+
     conn = get_db_connection()
+
 
     try:
 
@@ -1094,11 +1508,14 @@ def slet_nyhed(id):
             id,
         ))
 
+
         conn.commit()
+
 
     finally:
 
         conn.close()
+
 
     return redirect(
         url_for("admin")
@@ -1116,6 +1533,7 @@ def hent_nyheder():
 
     conn = get_db_connection()
 
+
     try:
 
         nyheder = hent_lokale_nyheder(
@@ -1126,12 +1544,12 @@ def hent_nyheder():
 
         conn.close()
 
-    nyheder.extend(
-        hent_dr_nyheder()
-    )
+
+    dr_nyheder = hent_dr_nyheder()
+
 
     return jsonify(
-        nyheder=nyheder
+        nyheder=nyheder + dr_nyheder
     )
 
 
@@ -1148,7 +1566,9 @@ def hent_aktive_medier():
         "%Y-%m-%d"
     )
 
+
     conn = get_db_connection()
+
 
     try:
 
@@ -1166,13 +1586,21 @@ def hent_aktive_medier():
             idag,
         )).fetchall()
 
-        sekunder = get_billed_sekunder(
+
+        billed_sekunder = get_billed_sekunder(
             conn
         )
+
+
+        ticker_sekunder = get_ticker_sekunder(
+            conn
+        )
+
 
     finally:
 
         conn.close()
+
 
     return jsonify(
 
@@ -1181,6 +1609,36 @@ def hent_aktive_medier():
             for medie in medier
         ],
 
+        sekunder=billed_sekunder,
+
+        ticker_sekunder=ticker_sekunder
+    )
+
+
+# ============================================================
+# HENT TICKER INDSTILLINGER
+# ============================================================
+
+@app.route(
+    "/hent-ticker-indstillinger"
+)
+def hent_ticker_indstillinger():
+
+    conn = get_db_connection()
+
+
+    try:
+
+        sekunder = get_ticker_sekunder(
+            conn
+        )
+
+    finally:
+
+        conn.close()
+
+
+    return jsonify(
         sekunder=sekunder
     )
 
@@ -1200,6 +1658,7 @@ def hent_vejr_api():
         beskrivelse,
         ikon
     ) = hent_vejr()
+
 
     return jsonify(
 

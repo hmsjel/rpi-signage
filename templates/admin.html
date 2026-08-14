@@ -1,39 +1,154 @@
 <!DOCTYPE html>
 <html lang="da">
+
 <head>
+
     <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
     <title>Infoskærm - Admin Panel</title>
+
 
     <style>
 
+        * {
+            box-sizing: border-box;
+        }
+
+
         body {
-            font-family: Arial, sans-serif;
+
+            font-family:
+                Arial,
+                sans-serif;
+
             background: #f4f4f9;
-            padding: 40px;
+
+            margin: 0;
+
+            padding: 30px;
+
             color: #333;
         }
 
-        .flex-container {
+
+        /* ==================================================
+           TOP
+           ================================================== */
+
+        .top-bar {
+
             display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
 
-        .Kasse {
-            background: white;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            flex: 1;
-            min-width: 250px;
+            justify-content: space-between;
+
+            align-items: center;
+
             margin-bottom: 30px;
+
+            background: white;
+
+            padding: 20px 25px;
+
+            border-radius: 10px;
+
+            box-shadow:
+                0 4px 10px
+                rgba(0,0,0,0.08);
         }
 
-        label {
-            display: block;
-            margin-top: 15px;
+
+        .top-bar h1 {
+
+            margin: 0;
+
+            font-size: 28px;
+        }
+
+
+        .logout {
+
+            background: #dc3545;
+
+            color: white;
+
+            text-decoration: none;
+
+            padding: 10px 18px;
+
+            border-radius: 5px;
+
             font-weight: bold;
         }
+
+
+        .logout:hover {
+
+            background: #b02a37;
+        }
+
+
+        /* ==================================================
+           KASSER
+           ================================================== */
+
+        .flex-container {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    auto-fit,
+                    minmax(280px, 1fr)
+                );
+
+            gap: 20px;
+
+            margin-bottom: 40px;
+        }
+
+
+        .Kasse {
+
+            background: white;
+
+            padding: 25px;
+
+            border-radius: 10px;
+
+            box-shadow:
+                0 4px 10px
+                rgba(0,0,0,0.08);
+        }
+
+
+        .Kasse h2 {
+
+            margin-top: 0;
+
+            font-size: 20px;
+        }
+
+
+        /* ==================================================
+           FORMULAR
+           ================================================== */
+
+        label {
+
+            display: block;
+
+            margin-top: 15px;
+
+            margin-bottom: 5px;
+
+            font-weight: bold;
+        }
+
 
         input[type="text"],
         input[type="file"],
@@ -42,730 +157,1205 @@
         select {
 
             width: 100%;
+
             padding: 10px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
+
+            border:
+                1px solid #ccc;
+
+            border-radius: 5px;
+
             font-size: 14px;
+
             background: white;
         }
 
-        button {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            margin-top: 20px;
-            cursor: pointer;
-            border-radius: 4px;
-            font-size: 16px;
-            width: 100%;
+
+        input:focus,
+        select:focus {
+
+            outline: none;
+
+            border-color: #007bff;
         }
+
+
+        /* ==================================================
+           KNAPPER
+           ================================================== */
+
+        button {
+
+            width: 100%;
+
+            border: none;
+
+            padding: 12px 20px;
+
+            margin-top: 20px;
+
+            cursor: pointer;
+
+            border-radius: 5px;
+
+            font-size: 15px;
+
+            color: white;
+
+            background: #007bff;
+        }
+
 
         button:hover {
-            background: #0056b3;
+
+            opacity: 0.9;
         }
 
+
+        .upload-knap {
+
+            background: #007bff;
+        }
+
+
         .nyhed-knap {
+
             background: #28a745;
         }
 
+
         .indstil-knap {
+
             background: #6c757d;
         }
 
+
         .vejr-knap {
+
             background: #17a2b8;
         }
 
+
         .dato-knap {
+
             background: #007bff;
+
             font-size: 13px;
+
             padding: 9px 12px;
-            margin-top: 8px;
         }
 
+
         .dato-knap:hover {
+
             background: #0056b3;
         }
 
+
+        /* ==================================================
+           SEKTIONER
+           ================================================== */
+
+        .section {
+
+            margin-bottom: 40px;
+        }
+
+
+        .section h2 {
+
+            margin-bottom: 10px;
+        }
+
+
+        .section-info {
+
+            color: #666;
+
+            margin-top: 0;
+
+            margin-bottom: 20px;
+        }
+
+
+        /* ==================================================
+           NYHEDSTABEL
+           ================================================== */
+
+        table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+            background: white;
+
+            border-radius: 8px;
+
+            overflow: hidden;
+
+            box-shadow:
+                0 4px 10px
+                rgba(0,0,0,0.06);
+        }
+
+
+        th,
+        td {
+
+            padding: 12px;
+
+            border-bottom:
+                1px solid #ddd;
+
+            text-align: left;
+        }
+
+
+        th {
+
+            background: #eee;
+        }
+
+
+        tr:last-child td {
+
+            border-bottom: none;
+        }
+
+
         .slet-knap {
+
             color: #dc3545;
+
             text-decoration: none;
+
             font-weight: bold;
         }
 
-        .status-checkbox {
-            transform: scale(1.5);
-            cursor: pointer;
+
+        .slet-knap:hover {
+
+            text-decoration: underline;
         }
 
-        /* ====================================================
-           MEDIE GRID
-        ==================================================== */
+
+        /* ==================================================
+           MEDIA GRID
+           ================================================== */
 
         .media-grid {
+
             display: grid;
+
             grid-template-columns:
                 repeat(
                     auto-fill,
                     minmax(220px, 1fr)
                 );
+
             gap: 20px;
+
             margin-top: 20px;
-            margin-bottom: 40px;
         }
 
-        /* ====================================================
-           MEDIEKORT
-        ==================================================== */
+
+        /* ==================================================
+           MEDIA CARD
+           ================================================== */
 
         .media-card {
+
             background: white;
-            border-radius: 8px;
+
+            border-radius: 10px;
+
             box-shadow:
-                0 4px 10px rgba(0,0,0,0.08);
+                0 4px 10px
+                rgba(0,0,0,0.08);
+
             padding: 15px;
+
             display: flex;
+
             flex-direction: column;
+
             align-items: center;
+
             text-align: center;
-            border: 1px solid #eee;
+
+            border:
+                1px solid #eee;
         }
 
-        /* ====================================================
+
+        /* ==================================================
            PREVIEW
-        ==================================================== */
+           ================================================== */
 
         .media-card-preview {
+
             width: 100%;
-            height: 120px;
+
+            height: 140px;
+
             object-fit: cover;
+
             border-radius: 6px;
+
             background: #000;
+
             margin-bottom: 12px;
         }
 
-        /* ====================================================
+
+        /* ==================================================
            FILNAVN
-        ==================================================== */
+           ================================================== */
 
         .media-card-title {
+
             font-size: 13px;
-            font-weight: 500;
+
+            font-weight: bold;
+
             word-break: break-all;
+
             margin-bottom: 10px;
+
             color: #444;
+
             min-height: 32px;
         }
 
-        /* ====================================================
+
+        /* ==================================================
            STATUS
-        ==================================================== */
+           ================================================== */
 
         .media-status {
+
             width: 100%;
+
             padding: 8px 5px;
+
             border-radius: 5px;
+
             font-size: 12px;
+
             font-weight: bold;
+
             margin-bottom: 10px;
-            box-sizing: border-box;
         }
 
+
         .status-aktiv {
+
             background: #d4edda;
+
             color: #155724;
         }
 
+
         .status-udloebes-i-dag {
+
             background: #fff3cd;
+
             color: #856404;
         }
 
+
         .status-udloebet {
+
             background: #f8d7da;
+
             color: #721c24;
         }
 
+
         .status-deaktiveret {
+
             background: #e2e3e5;
+
             color: #383d41;
         }
 
+
+        /* ==================================================
+           UDLØBSDATO
+           ================================================== */
+
         .udloeb-container {
+
             width: 100%;
+
             margin-top: 5px;
+
             margin-bottom: 12px;
+
             padding-top: 10px;
-            border-top: 1px solid #eee;
+
+            border-top:
+                1px solid #eee;
         }
 
+
         .udloeb-container label {
+
             margin: 0;
+
             font-size: 12px;
+
             color: #555;
+
             text-align: left;
         }
 
+
         .udloeb-container input[type="date"] {
+
             font-size: 13px;
+
             padding: 8px;
         }
 
-        /* ====================================================
+
+        .udloeb-info {
+
+            font-size: 11px;
+
+            color: #777;
+
+            margin-top: 6px;
+        }
+
+
+        .udloeb-aldrig {
+
+            color: #28a745;
+        }
+
+
+        /* ==================================================
            KONTROLLER
-        ==================================================== */
+           ================================================== */
 
         .media-card-controls {
+
             display: flex;
+
             width: 100%;
-            justify-content: space-between;
+
+            justify-content:
+                space-between;
+
             align-items: center;
-            border-top: 1px solid #eee;
+
+            border-top:
+                1px solid #eee;
+
             padding-top: 12px;
         }
 
+
         .media-card-controls label {
+
             margin: 0;
+
             font-size: 13px;
+
             cursor: pointer;
+
             display: flex;
+
             align-items: center;
+
             gap: 8px;
         }
 
-        /* ====================================================
-           TABELLER
-        ==================================================== */
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        .status-checkbox {
+
+            transform: scale(1.4);
+
+            cursor: pointer;
+        }
+
+
+        /* ==================================================
+           BESKED
+           ================================================== */
+
+        .empty {
+
             background: white;
-            margin-bottom: 40px;
+
+            padding: 30px;
+
+            text-align: center;
+
+            border-radius: 8px;
+
+            color: #777;
         }
 
-        th,
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #ddd;
-            text-align: left;
-        }
 
-        th {
-            background: #eee;
+        /* ==================================================
+           RESPONSIVE
+           ================================================== */
+
+        @media (max-width: 600px) {
+
+            body {
+
+                padding: 15px;
+            }
+
+
+            .top-bar {
+
+                flex-direction: column;
+
+                gap: 15px;
+
+                align-items:
+                    flex-start;
+            }
+
+
+            .logout {
+
+                width: 100%;
+
+                text-align: center;
+            }
+
         }
 
     </style>
+
 </head>
+
 
 <body>
 
-    <h1>Signage Admin Panel</h1>
+
+<!-- ============================================================
+     TOP
+     ============================================================ -->
+
+<div class="top-bar">
+
+    <h1>
+        📺 Infoskærm Admin
+    </h1>
 
 
-    <!-- =====================================================
-         INDSTILLINGER
-    ====================================================== -->
+    <a
+        href="/logout"
+        class="logout"
+    >
+        Log ud
+    </a>
 
-    <div class="flex-container">
+</div>
 
 
-        <!-- =================================================
-             UPLOAD MEDIE
-        ================================================== -->
 
-        <div class="Kasse">
+<!-- ============================================================
+     INDSTILLINGER
+     ============================================================ -->
 
-            <h2>Upload nyt medie</h2>
+<div class="flex-container">
 
-            <form
-                action="/admin"
-                method="POST"
-                enctype="multipart/form-data"
+
+    <!-- ========================================================
+         UPLOAD
+         ======================================================== -->
+
+    <div class="Kasse">
+
+        <h2>
+            📤 Upload nyt medie
+        </h2>
+
+
+        <form
+            action="/admin"
+            method="POST"
+            enctype="multipart/form-data"
+        >
+
+            <label>
+                Vælg billede eller video:
+            </label>
+
+
+            <input
+                type="file"
+                name="medie_fil"
+                accept="image/*,video/*"
+                required
             >
 
-                <label>
-                    Vælg Billede eller Video:
-                </label>
 
-                <input
-                    type="file"
-                    name="medie_fil"
-                    accept="image/*,video/*"
-                    required
-                >
-
-                <label>
-                    Udløbsdato
-                    (Valgfri - lad stå tom for altid aktiv):
-                </label>
-
-                <input
-                    type="date"
-                    name="udloeb_dato"
-                >
-
-                <button type="submit">
-                    Upload og aktiver
-                </button>
-
-            </form>
-
-        </div>
+            <label>
+                Udløbsdato
+            </label>
 
 
-        <!-- =================================================
-             NYHED
-        ================================================== -->
-
-        <div class="Kasse">
-
-            <h2>
-                Tilføj rullende nyhedstekst
-            </h2>
-
-            <form
-                action="/admin"
-                method="POST"
+            <input
+                type="date"
+                name="udloeb_dato"
             >
 
-                <label>
-                    Skriv nyhedsbesked:
-                </label>
 
-                <input
-                    type="text"
-                    name="nyhed_tekst"
-                    placeholder="Skriv tekst her..."
-                    required
-                >
-
-                <button
-                    type="submit"
-                    class="nyhed-knap"
-                >
-                    Tilføj til ticker
-                </button>
-
-            </form>
-
-        </div>
+            <small>
+                Lad feltet være tomt,
+                hvis mediet aldrig skal udløbe.
+            </small>
 
 
-        <!-- =================================================
-             HASTIGHED
-        ================================================== -->
-
-        <div class="Kasse">
-
-            <h2>
-                Slideshow hastighed
-            </h2>
-
-            <form
-                action="/admin"
-                method="POST"
+            <button
+                type="submit"
+                class="upload-knap"
             >
+                Upload og aktiver
+            </button>
 
-                <label>
-                    Visningstid for billeder (sekunder):
-                </label>
-
-                <input
-                    type="number"
-                    name="billed_sekunder"
-                    value="{{ nuvaerende_sekunder }}"
-                    min="1"
-                    max="120"
-                    required
-                >
-
-                <button
-                    type="submit"
-                    class="indstil-knap"
-                >
-                    Gem hastighed
-                </button>
-
-            </form>
-
-        </div>
-
-
-        <!-- =================================================
-             VEJR
-        ================================================== -->
-
-        <div class="Kasse">
-
-            <h2>
-                Vejr-lokation
-            </h2>
-
-            <form
-                action="/admin"
-                method="POST"
-            >
-
-                <label>
-                    Vælg by til vejrudsigten:
-                </label>
-
-                <select name="valgt_by">
-
-                    {% for by in byer %}
-
-                        <option
-                            value="{{ by }}"
-                            {% if by == nuvaerende_by %}
-                                selected
-                            {% endif %}
-                        >
-                            {{ by }}
-                        </option>
-
-                    {% endfor %}
-
-                </select>
-
-                <button
-                    type="submit"
-                    class="vejr-knap"
-                >
-                    Opdater by
-                </button>
-
-            </form>
-
-        </div>
+        </form>
 
     </div>
 
 
-    <!-- =====================================================
-         NYHEDER
-    ====================================================== -->
+
+    <!-- ========================================================
+         NYHED
+         ======================================================== -->
+
+    <div class="Kasse">
+
+        <h2>
+            📰 Tilføj nyhed
+        </h2>
+
+
+        <form
+            action="/admin"
+            method="POST"
+        >
+
+            <label>
+                Nyhedsbesked:
+            </label>
+
+
+            <input
+                type="text"
+                name="nyhed_tekst"
+                placeholder="Skriv tekst her..."
+                required
+            >
+
+
+            <button
+                type="submit"
+                class="nyhed-knap"
+            >
+                Tilføj til ticker
+            </button>
+
+        </form>
+
+    </div>
+
+
+
+    <!-- ========================================================
+         BILLEDHASTIGHED
+         ======================================================== -->
+
+    <div class="Kasse">
+
+        <h2>
+            🖼️ Slideshow hastighed
+        </h2>
+
+
+        <form
+            action="/admin"
+            method="POST"
+        >
+
+            <label>
+                Visningstid for billeder
+                (sekunder):
+            </label>
+
+
+            <input
+                type="number"
+                name="billed_sekunder"
+                value="{{ nuvaerende_sekunder }}"
+                min="1"
+                max="120"
+                required
+            >
+
+
+            <button
+                type="submit"
+                class="indstil-knap"
+            >
+                Gem billedhastighed
+            </button>
+
+        </form>
+
+    </div>
+
+
+
+    <!-- ========================================================
+         TICKER HASTIGHED
+         ======================================================== -->
+
+    <div class="Kasse">
+
+        <h2>
+            📰 Nyhedsbjælkens hastighed
+        </h2>
+
+
+        <form
+            action="/admin"
+            method="POST"
+        >
+
+            <label>
+                Tid for én hel rulning
+                (sekunder):
+            </label>
+
+
+            <input
+                type="number"
+                name="ticker_sekunder"
+                value="{{ nuvaerende_ticker_sekunder }}"
+                min="5"
+                max="300"
+                required
+            >
+
+
+            <small>
+                Lavere tal = hurtigere rulning.
+            </small>
+
+
+            <button
+                type="submit"
+                class="indstil-knap"
+            >
+                Gem nyhedshastighed
+            </button>
+
+        </form>
+
+    </div>
+
+
+
+    <!-- ========================================================
+         VEJR
+         ======================================================== -->
+
+    <div class="Kasse">
+
+        <h2>
+            🌤️ Vejr-lokation
+        </h2>
+
+
+        <form
+            action="/admin"
+            method="POST"
+        >
+
+            <label>
+                Vælg by:
+            </label>
+
+
+            <select name="valgt_by">
+
+                {% for by in byer %}
+
+                    <option
+                        value="{{ by }}"
+                        {% if by == nuvaerende_by %}
+                            selected
+                        {% endif %}
+                    >
+
+                        {{ by }}
+
+                    </option>
+
+                {% endfor %}
+
+            </select>
+
+
+            <button
+                type="submit"
+                class="vejr-knap"
+            >
+                Opdater vejr
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+
+<!-- ============================================================
+     NYHEDER
+     ============================================================ -->
+
+<div class="section">
 
     <h2>
-        Rullende Nyheder i Bunden
+        📰 Rullende nyheder
     </h2>
 
-    <table>
 
-        <tr>
-            <th>
-                Tekstbesked
-            </th>
-
-            <th>
-                Handling
-            </th>
-        </tr>
-
-        {% for nyhed in nyheder %}
-
-        <tr>
-
-            <td>
-                {{ nyhed.tekst }}
-            </td>
-
-            <td>
-
-                <a
-                    href="/slet-nyhed/{{ nyhed.id }}"
-                    class="slet-knap"
-                    onclick="
-                        return confirm(
-                            'Vil du slette denne nyhed?'
-                        )
-                    "
-                >
-                    Slet
-                </a>
-
-            </td>
-
-        </tr>
-
-        {% endfor %}
-
-    </table>
-
-
-    <!-- =====================================================
-         MEDIER
-    ====================================================== -->
-
-    <h2>
-        Nuværende Medier
-    </h2>
-
-    <p>
-        Her kan du aktivere/deaktivere medier og ændre
-        deres udløbsdato.
+    <p class="section-info">
+        Disse beskeder vises sammen med DR-nyheder
+        i bunden af infoskærmen.
     </p>
 
 
-    <div class="media-grid">
+    {% if nyheder %}
 
-        {% for medie in medier %}
+        <table>
 
-        <div class="media-card">
+            <thead>
 
+                <tr>
 
-            <!-- =============================================
-                 PREVIEW
-            ============================================== -->
+                    <th>
+                        Tekstbesked
+                    </th>
 
-            {% if
-                medie.filnavn.endswith('.mp4')
-                or medie.filnavn.endswith('.webm')
-                or medie.filnavn.endswith('.mov')
-            %}
+                    <th>
+                        Handling
+                    </th>
 
-                <video
-                    src="/uploads/{{ medie.filnavn }}"
-                    class="media-card-preview"
-                    muted
-                    controls
-                ></video>
+                </tr>
 
-            {% else %}
-
-                <img
-                    src="/uploads/{{ medie.filnavn }}"
-                    alt="Preview"
-                    class="media-card-preview"
-                >
-
-            {% endif %}
+            </thead>
 
 
-            <!-- =============================================
-                 FILNAVN
-            ============================================== -->
+            <tbody>
 
-            <div class="media-card-title">
-                {{ medie.filnavn }}
-            </div>
+                {% for nyhed in nyheder %}
 
+                    <tr>
 
-            <!-- =============================================
-                 STATUS
-            ============================================== -->
-
-            {% set idag = now().strftime('%Y-%m-%d') if now is defined else '' %}
-
-            {% if medie.aktiv != 1 %}
-
-                <div class="media-status status-deaktiveret">
-                    ⚫ DEAKTIVERET
-                </div>
-
-            {% elif not medie.udloebs_dato %}
-
-                <div class="media-status status-aktiv">
-                    🟢 AKTIV – UDLØBER ALDRIG
-                </div>
-
-            {% elif medie.udloebs_dato < current_date %}
-
-                <div class="media-status status-udloebet">
-                    🔴 UDLØBET
-                </div>
-
-            {% elif medie.udloebs_dato == current_date %}
-
-                <div class="media-status status-udloebes-i-dag">
-                    🟠 UDLØBER I DAG
-                </div>
-
-            {% else %}
-
-                <div class="media-status status-aktiv">
-                    🟢 AKTIV
-                </div>
-
-            {% endif %}
+                        <td>
+                            {{ nyhed.tekst }}
+                        </td>
 
 
-            <!-- =============================================
-                 UDLØBSDATO
-            ============================================== -->
+                        <td>
 
-            <div class="udloeb-container">
+                            <a
+                                href="/slet-nyhed/{{ nyhed.id }}"
+                                class="slet-knap"
 
-                <form
-                    action="/aendre-udloeb/{{ medie.id }}"
-                    method="POST"
-                >
+                                onclick="
+                                    return confirm(
+                                        'Vil du slette denne nyhed?'
+                                    )
+                                "
+                            >
+                                Slet
+                            </a>
 
-                    <label
-                        for="udloeb_{{ medie.id }}"
-                    >
-                        Udløbsdato:
-                    </label>
+                        </td>
 
-                    <input
-                        type="date"
-                        id="udloeb_{{ medie.id }}"
-                        name="udloeb_dato"
-                        value="{{ medie.udloebs_dato or '' }}"
-                    >
+                    </tr>
 
-                    <button
-                        type="submit"
-                        class="dato-knap"
-                    >
-                        Gem udløbsdato
-                    </button>
+                {% endfor %}
 
-                </form>
+            </tbody>
 
+        </table>
 
-                {% if medie.udloebs_dato %}
+    {% else %}
 
-                    <div
-                        style="
-                            font-size: 11px;
-                            color: #777;
-                            margin-top: 6px;
-                        "
-                    >
-                        Udløber:
-                        {{ medie.udloebs_dato }}
-                    </div>
+        <div class="empty">
 
-                {% else %}
-
-                    <div
-                        style="
-                            font-size: 11px;
-                            color: #28a745;
-                            margin-top: 6px;
-                        "
-                    >
-                        Udløber aldrig
-                    </div>
-
-                {% endif %}
-
-            </div>
-
-
-            <!-- =============================================
-                 KONTROLLER
-            ============================================== -->
-
-            <div class="media-card-controls">
-
-                <label>
-
-                    <input
-                        type="checkbox"
-                        class="status-checkbox"
-                        data-id="{{ medie.id }}"
-
-                        {% if medie.aktiv == 1 %}
-                            checked
-                        {% endif %}
-
-                        onchange="opdaterStatus(this)"
-                    >
-
-                    Vis på skærm
-
-                </label>
-
-
-                <a
-                    href="/slet/{{ medie.id }}"
-                    class="slet-knap"
-
-                    onclick="
-                        return confirm(
-                            'Vil du slette filen helt?'
-                        )
-                    "
-                >
-                    Slet
-                </a>
-
-            </div>
-
+            Ingen lokale nyheder oprettet.
 
         </div>
 
-        {% endfor %}
+    {% endif %}
 
-    </div>
+</div>
 
 
-    <!-- =====================================================
-         JAVASCRIPT
-    ====================================================== -->
 
-    <script>
+<!-- ============================================================
+     MEDIER
+     ============================================================ -->
 
-        async function opdaterStatus(checkbox) {
+<div class="section">
 
-            const id =
-                checkbox.getAttribute(
-                    'data-id'
-                );
+    <h2>
+        🖼️ Nuværende medier
+    </h2>
 
-            const erAktiv =
-                checkbox.checked;
 
-            try {
+    <p class="section-info">
 
-                const response =
-                    await fetch(
-                        `/skift-status/${id}`,
-                        {
-                            method: 'POST',
+        Her kan du aktivere/deaktivere medier,
+        ændre udløbsdato eller slette dem.
 
-                            headers: {
-                                'Content-Type':
-                                    'application/json'
-                            },
+    </p>
 
-                            body:
-                                JSON.stringify({
-                                    aktiv: erAktiv
-                                })
-                        }
-                    );
 
-                if (!response.ok) {
+    {% if medier %}
 
-                    console.error(
-                        "Kunne ikke ændre status"
-                    );
+        <div class="media-grid">
 
+
+            {% for medie in medier %}
+
+                <div class="media-card">
+
+
+                    <!-- ========================================
+                         PREVIEW
+                         ======================================== -->
+
+                    {% if
+                        medie.filnavn.lower().endswith('.mp4')
+                        or medie.filnavn.lower().endswith('.webm')
+                        or medie.filnavn.lower().endswith('.mov')
+                    %}
+
+                        <video
+                            src="/uploads/{{ medie.filnavn }}"
+                            class="media-card-preview"
+                            muted
+                            controls
+                        ></video>
+
+                    {% else %}
+
+                        <img
+                            src="/uploads/{{ medie.filnavn }}"
+                            class="media-card-preview"
+                            alt="Preview"
+                        >
+
+                    {% endif %}
+
+
+
+                    <!-- ========================================
+                         FILNAVN
+                         ======================================== -->
+
+                    <div class="media-card-title">
+
+                        {{ medie.filnavn }}
+
+                    </div>
+
+
+
+                    <!-- ========================================
+                         STATUS
+                         ======================================== -->
+
+                    {% if medie.aktiv != 1 %}
+
+                        <div
+                            class="
+                                media-status
+                                status-deaktiveret
+                            "
+                        >
+                            ⚫ DEAKTIVERET
+                        </div>
+
+
+                    {% elif not medie.udloebs_dato %}
+
+                        <div
+                            class="
+                                media-status
+                                status-aktiv
+                            "
+                        >
+                            🟢 AKTIV -
+                            UDLØBER ALDRIG
+                        </div>
+
+
+                    {% elif medie.udloebs_dato < current_date %}
+
+                        <div
+                            class="
+                                media-status
+                                status-udloebet
+                            "
+                        >
+                            🔴 UDLØBET
+                        </div>
+
+
+                    {% elif medie.udloebs_dato == current_date %}
+
+                        <div
+                            class="
+                                media-status
+                                status-udloebes-i-dag
+                            "
+                        >
+                            🟠 UDLØBER I DAG
+                        </div>
+
+
+                    {% else %}
+
+                        <div
+                            class="
+                                media-status
+                                status-aktiv
+                            "
+                        >
+                            🟢 AKTIV
+                        </div>
+
+                    {% endif %}
+
+
+
+                    <!-- ========================================
+                         UDLØBSDATO
+                         ======================================== -->
+
+                    <div class="udloeb-container">
+
+                        <form
+                            action="/aendre-udloeb/{{ medie.id }}"
+                            method="POST"
+                        >
+
+                            <label
+                                for="udloeb_{{ medie.id }}"
+                            >
+                                Udløbsdato:
+                            </label>
+
+
+                            <input
+                                type="date"
+                                id="udloeb_{{ medie.id }}"
+                                name="udloeb_dato"
+                                value="{{ medie.udloebs_dato or '' }}"
+                            >
+
+
+                            <button
+                                type="submit"
+                                class="dato-knap"
+                            >
+                                Gem udløbsdato
+                            </button>
+
+                        </form>
+
+
+                        {% if medie.udloebs_dato %}
+
+                            <div class="udloeb-info">
+
+                                Udløber:
+                                {{ medie.udloebs_dato }}
+
+                            </div>
+
+                        {% else %}
+
+                            <div
+                                class="
+                                    udloeb-info
+                                    udloeb-aldrig
+                                "
+                            >
+
+                                Udløber aldrig
+
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+
+
+                    <!-- ========================================
+                         KONTROLLER
+                         ======================================== -->
+
+                    <div class="media-card-controls">
+
+
+                        <label>
+
+                            <input
+                                type="checkbox"
+                                class="status-checkbox"
+                                data-id="{{ medie.id }}"
+
+                                {% if medie.aktiv == 1 %}
+                                    checked
+                                {% endif %}
+
+                                onchange="
+                                    opdaterStatus(this)
+                                "
+                            >
+
+                            Vis på skærm
+
+                        </label>
+
+
+                        <a
+                            href="/slet/{{ medie.id }}"
+                            class="slet-knap"
+
+                            onclick="
+                                return confirm(
+                                    'Vil du slette filen helt?'
+                                )
+                            "
+                        >
+                            Slet
+                        </a>
+
+                    </div>
+
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <div class="empty">
+
+            Ingen medier uploadet endnu.
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+
+<script>
+
+async function opdaterStatus(checkbox) {
+
+    const id =
+        checkbox.getAttribute(
+            "data-id"
+        );
+
+
+    const erAktiv =
+        checkbox.checked;
+
+
+    try {
+
+        const response =
+            await fetch(
+                `/skift-status/${id}`,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+                            aktiv: erAktiv
+                        })
                 }
+            );
 
-                // Genindlæs siden så statusfarven
-                // bliver opdateret.
-                location.reload();
 
-            }
-            catch (error) {
+        if (!response.ok) {
 
-                console.error(
-                    "Fejl:",
-                    error
-                );
+            console.error(
+                "Kunne ikke ændre status"
+            );
 
-            }
+            checkbox.checked =
+                !erAktiv;
+
+            return;
 
         }
 
-    </script>
+
+        /*
+         * Opdater siden efter
+         * succes så statusboksen
+         * bliver korrekt.
+         */
+
+        location.reload();
+
+
+    } catch (error) {
+
+        console.error(
+            "Fejl:",
+            error
+        );
+
+
+        checkbox.checked =
+            !erAktiv;
+
+    }
+
+}
+
+</script>
+
 
 </body>
+
 </html>

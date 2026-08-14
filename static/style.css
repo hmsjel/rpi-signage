@@ -1,24 +1,18 @@
-/* ============================================================
-   GENERELT
-   ============================================================ */
-
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-html,
-body {
-    width: 100%;
-    height: 100%;
-}
 
 body {
     background: #000;
     color: #fff;
     font-family: Arial, sans-serif;
     overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
 }
 
 
@@ -27,22 +21,16 @@ body {
    ============================================================ */
 
 .media-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 200px;
-    bottom: 60px;
-
+    position: relative;
+    flex: 1;
+    height: calc(100vh - 60px);
     background: #000;
     overflow: hidden;
 }
 
 
-/* Alle medier */
-
 .slide {
     position: absolute;
-
     top: 0;
     left: 0;
 
@@ -55,41 +43,57 @@ body {
 }
 
 
-/* Aktivt medie */
-
-.slide.active {
+.active {
     display: block;
 }
 
 
+.ingen-medier {
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    font-size: 30px;
+
+    color: white;
+}
+
+
 /* ============================================================
-   SIDEPANEL
+   SIDEBAR
    ============================================================ */
 
 .sidebar {
-    position: absolute;
-
-    top: 0;
-    right: 0;
-    bottom: 60px;
 
     width: 200px;
 
+    height:
+        calc(100vh - 60px);
+
     background: #111;
 
-    border-left: 1px solid #222;
+    border-left:
+        1px solid #222;
 
     display: flex;
+
     flex-direction: column;
+
     align-items: center;
 
-    padding: 30px 20px;
+    padding:
+        30px 20px;
 
     text-align: center;
 
-    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.5);
+    box-shadow:
+        -5px 0 20px
+        rgba(0,0,0,0.5);
 
-    z-index: 5;
 }
 
 
@@ -98,39 +102,83 @@ body {
    ============================================================ */
 
 .clock-section {
-    width: 100%;
 
     margin-bottom: 5px;
 
+    border-bottom:
+        1px solid #222;
+
     padding-bottom: 20px;
 
-    border-bottom: 1px solid #222;
+    width: 100%;
+
+    position: relative;
+
+    transition:
+        transform 1s ease;
+
 }
 
 
-/* Dato */
-
 #date {
+
     font-size: 14px;
 
-    letter-spacing: 1.5px;
+    letter-spacing:
+        1.5px;
 
     color: #888;
 
-    text-transform: uppercase;
+    text-transform:
+        uppercase;
+
 }
 
 
-/* Klokkeslæt */
-
 #time {
-    margin-top: 5px;
 
     font-size: 38px;
 
     font-weight: bold;
 
     color: #fff;
+
+    margin-top: 5px;
+
+}
+
+
+/* ============================================================
+   BURN-IN BESKYTTELSE
+   ============================================================ */
+
+.clock-section.burnin-0 {
+    transform:
+        translate(0, 0);
+}
+
+
+.clock-section.burnin-1 {
+    transform:
+        translate(3px, 2px);
+}
+
+
+.clock-section.burnin-2 {
+    transform:
+        translate(-3px, 2px);
+}
+
+
+.clock-section.burnin-3 {
+    transform:
+        translate(3px, -2px);
+}
+
+
+.clock-section.burnin-4 {
+    transform:
+        translate(-3px, -2px);
 }
 
 
@@ -139,72 +187,71 @@ body {
    ============================================================ */
 
 .weather {
-    width: 100%;
 
-    margin-top: 5px;
+    margin-top: 20px;
 
     padding-top: 20px;
 
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-
-/* Vejr-ikon */
-
-#weather-icon {
-    font-size: 50px;
-
-    margin-bottom: 15px;
-
-    color: #fff;
-}
-
-
-/* Information */
-
-.weather-info {
     width: 100%;
 
-    text-align: center;
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
 }
 
 
-/* By */
+#weather-icon {
+
+    font-size: 48px;
+
+    margin-bottom: 10px;
+
+}
+
+
+.weather-info {
+
+    text-align: center;
+
+    width: 100%;
+
+}
+
 
 #weather-city {
-    font-size: 18px;
 
-    font-weight: bold;
+    font-size: 16px;
 
-    color: #fff;
+    color: #aaa;
 
-    margin-bottom: 8px;
+    margin-bottom: 5px;
+
 }
 
 
-/* Temperatur */
-
 #weather-temp {
+
     font-size: 42px;
 
     font-weight: bold;
 
-    color: #fff;
 }
 
 
-/* Beskrivelse */
-
 #weather-description {
+
     font-size: 15px;
 
     color: #aaa;
 
     margin-top: 5px;
 
-    text-transform: capitalize;
+    text-transform:
+        capitalize;
+
 }
 
 
@@ -213,80 +260,95 @@ body {
    ============================================================ */
 
 .ticker-wrap {
+
     position: absolute;
 
-    left: 0;
-    right: 0;
     bottom: 0;
 
-    width: 100%;
+    left: 0;
+
+    width: 100vw;
+
     height: 60px;
 
-    background: rgba(0, 0, 0, 0.95);
+    background:
+        rgba(0, 0, 0, 0.95);
 
-    border-top: 3px solid #e60000;
+    border-top:
+        3px solid #e60000;
 
     display: flex;
+
     align-items: center;
 
     overflow: hidden;
 
     z-index: 10;
+
 }
 
 
-/* "Seneste nyt" */
-
 .ticker-label {
+
+    background: #e60000;
+
+    color: white;
+
+    font-weight: bold;
+
+    padding:
+        0 20px;
+
+    font-size: 16px;
+
+    text-transform:
+        uppercase;
+
     position: absolute;
 
     left: 0;
 
+    z-index: 11;
+
     height: 100%;
 
-    padding: 0 20px;
-
-    background: #e60000;
-
-    color: #fff;
-
-    font-size: 16px;
-
-    font-weight: bold;
-
-    text-transform: uppercase;
-
     display: flex;
+
     align-items: center;
 
-    z-index: 11;
 }
 
 
-/* Selve tickeren */
-
 .ticker {
+
     display: flex;
+
     align-items: center;
 
     white-space: nowrap;
 
     padding-left: 100%;
 
-    animation: ticker-move 45s linear infinite;
+    animation:
+        ticker-move
+        45s
+        linear
+        infinite;
+
 }
 
 
-/* Nyhedstekst */
-
 .ticker-item {
+
     display: inline-block;
 
-    padding: 0 40px;
+    padding:
+        0 40px;
 
     font-size: 20px;
 
     color: #fff;
+
 }
 
 
@@ -297,77 +359,25 @@ body {
 @keyframes ticker-move {
 
     0% {
-        transform: translate3d(0, 0, 0);
+
+        transform:
+            translate3d(
+                0,
+                0,
+                0
+            );
+
     }
 
     100% {
-        transform: translate3d(-100%, 0, 0);
+
+        transform:
+            translate3d(
+                -100%,
+                0,
+                0
+            );
+
     }
 
 }
-
-/* ============================================================
-   BURN-IN BESKYTTELSE / PIXEL SHIFT
-   ============================================================ */
-
-/*
-   Hele hovedindholdet flyttes ganske få pixels med mellemrum.
-   Dette reducerer risikoen for burn-in på skærme, der kører
-   mange timer dagligt.
-*/
-
-.media-container,
-.sidebar {
-    transition: transform 1.5s ease-in-out;
-}
-
-
-/* De forskellige pixel-positioner */
-
-.burnin-position-0 {
-    transform: translate(0, 0);
-}
-
-.burnin-position-1 {
-    transform: translate(2px, 0);
-}
-
-.burnin-position-2 {
-    transform: translate(0, 2px);
-}
-
-.burnin-position-3 {
-    transform: translate(-2px, -2px);
-}
-
-/* ============================================================
-   BURN-IN BESKYTTELSE - UR OG DATO
-   ============================================================ */
-
-.clock-section,
-#date,
-#time {
-    transition: transform 1s ease-in-out;
-}
-
-.burnin-0 {
-    transform: translate(0, 0);
-}
-
-.burnin-1 {
-    transform: translate(2px, 0);
-}
-
-.burnin-2 {
-    transform: translate(0, 2px);
-}
-
-.burnin-3 {
-    transform: translate(-2px, -1px);
-}
-
-.burnin-4 {
-    transform: translate(-1px, 2px);
-}
-
-
