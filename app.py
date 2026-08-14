@@ -1,8 +1,6 @@
 import os
 import sqlite3
 import time
-import shutil
-
 from datetime import datetime
 
 import requests
@@ -16,142 +14,80 @@ from flask import (
     url_for,
     send_from_directory,
     jsonify,
-    session
+    session,
 )
-
-
-# ============================================================
-# FLASK
-# ============================================================
 
 app = Flask(__name__)
 
-app.secret_key = "skift-denne-til-en-lang-hemmelig-noegle"
-
-
 # ============================================================
-# ADMIN LOGIN
+# SIKKERHED / LOGIN
 # ============================================================
+
+app.secret_key = "SKIFT-DENNE-TIL-EN-LANG-TILFÆLDIG-NØGLE"
 
 ADMIN_BRUGERNAVN = "admin"
 ADMIN_KODE = "1234"
-
 
 # ============================================================
 # KONFIGURATION
 # ============================================================
 
-BASE_DIR = os.path.abspath(
-    os.path.dirname(__file__)
-)
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-DATABASE = os.path.join(
-    BASE_DIR,
-    "skaerm.db"
-)
-
-UPLOAD_FOLDER = os.path.join(
-    BASE_DIR,
-    "uploads"
-)
+DATABASE = os.path.join(BASE_DIR, "skaerm.db")
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-
 ALLOWED_EXTENSIONS = {
-    "jpg",
-    "jpeg",
-    "png",
-    "gif",
-    "webp",
-    "mp4",
-    "mov",
-    "webm"
+    "jpg", "jpeg", "png", "gif", "webp",
+    "mp4", "mov", "webm"
 }
 
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # ============================================================
 # STANDARDINDSTILLINGER
 # ============================================================
 
 DEFAULT_BILLED_SEKUNDER = 12
-DEFAULT_TICKER_SEKUNDER = 45
-
-
-# ============================================================
-# VEJR
-# ============================================================
+DEFAULT_TICKER_SEKUNDER = 90
+DEFAULT_DR_INTERVAL_SEKUNDER = 300
+DEFAULT_DR_ANTAL = 5
 
 VEJR_BY = "Skovgaarde"
-
 VEJR_LATITUDE = 56.50941163
 VEJR_LONGITUDE = 10.5417551
 
-
-# ============================================================
-# DR RSS
-# ============================================================
-
-DR_RSS_URL = (
-    "https://www.dr.dk/nyheder/service/feeds/allenyheder"
-)
-
-
-# ============================================================
-# CACHE
-# ============================================================
+DR_RSS_URL = "https://www.dr.dk/nyheder/service/feeds/allenyheder"
 
 VEJR_CACHE_SEKUNDER = 300
 NYHED_CACHE_SEKUNDER = 300
-
 
 weather_cache = {
     "timestamp": 0,
     "data": None
 }
 
-
 news_cache = {
     "timestamp": 0,
     "data": []
 }
-
-
-# ============================================================
-# UPLOAD-MAPPE
-# ============================================================
-
-os.makedirs(
-    UPLOAD_FOLDER,
-    exist_ok=True
-)
-
 
 # ============================================================
 # DATABASE
 # ============================================================
 
 def get_db_connection():
-
-    conn = sqlite3.connect(
-        DATABASE
-    )
-
+    conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
-
     return conn
 
 
 def init_db():
-
     conn = get_db_connection()
 
     try:
-
-        # ----------------------------------------------------
-        # MEDIER
-        # ----------------------------------------------------
-
         conn.execute("""
             CREATE TABLE IF NOT EXISTS medier (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -161,28 +97,17 @@ def init_db():
             )
         """)
 
-        # Sørg for udloebs_dato findes
-
-        kolonner = conn.execute(
+        columns = conn.execute(
             "PRAGMA table_info(medier)"
         ).fetchall()
 
-        kolonne_navne = [
-            kolonne["name"]
-            for kolonne in kolonner
-        ]
+        column_names = [column["name"] for column in columns]
 
-        if "udloebs_dato" not in kolonne_navne:
-
+        if "udloebs_dato" not in column_names:
             conn.execute("""
                 ALTER TABLE medier
                 ADD COLUMN udloebs_dato TEXT
             """)
-
-
-        # ----------------------------------------------------
-        # TICKER
-        # ----------------------------------------------------
 
         conn.execute("""
             CREATE TABLE IF NOT EXISTS ticker (
@@ -190,11 +115,6 @@ def init_db():
                 tekst TEXT NOT NULL
             )
         """)
-
-
-        # ----------------------------------------------------
-        # INDSTILLINGER
-        # ----------------------------------------------------
 
         conn.execute("""
             CREATE TABLE IF NOT EXISTS indstillinger (
@@ -204,276 +124,142 @@ def init_db():
             )
         """)
 
+        defaults = [
+            ("billed_sekunder", str(DEFAULT_BILLED_SEKUNDER)),
+            ("ticker_sekunder", str(DEFAULT_TICKER_SEKUNDER)),
+            ("dr_interval_sekunder", str(DEFAULT_DR_INTERVAL_SEKUNDER)),
+            ("dr_antal", str(DEFAULT_DR_ANTAL)),
+            ("vejr_by", VEJR_BY),
+            ("vejr_lat", str(VEJR_LATITUDE)),
+            ("vejr_lon", str(VEJR_LONGITUDE)),
+        ]
 
-        # ----------------------------------------------------
-        # STANDARD BILLEDHASTIGHED
-        # ----------------------------------------------------
-
-        conn.execute("""
-            INSERT OR IGNORE INTO indstillinger
-            (nogle, vaerdi)
-            VALUES (?, ?)
-        """, (
-            "billed_sekunder",
-            str(DEFAULT_BILLED_SEKUNDER)
-        ))
-
-
-        # ----------------------------------------------------
-        # STANDARD TICKER-HASTIGHED
-        # ----------------------------------------------------
-
-        conn.execute("""
-            INSERT OR IGNORE INTO indstillinger
-            (nogle, vaerdi)
-            VALUES (?, ?)
-        """, (
-            "ticker_sekunder",
-            str(DEFAULT_TICKER_SEKUNDER)
-        ))
-
-
-        # ----------------------------------------------------
-        # VEJR
-        # ----------------------------------------------------
-
-        conn.execute("""
-            INSERT OR IGNORE INTO indstillinger
-            (nogle, vaerdi)
-            VALUES (?, ?)
-        """, (
-            "vejr_by",
-            VEJR_BY
-        ))
-
-        conn.execute("""
-            INSERT OR IGNORE INTO indstillinger
-            (nogle, vaerdi)
-            VALUES (?, ?)
-        """, (
-            "vejr_lat",
-            str(VEJR_LATITUDE)
-        ))
-
-        conn.execute("""
-            INSERT OR IGNORE INTO indstillinger
-            (nogle, vaerdi)
-            VALUES (?, ?)
-        """, (
-            "vejr_lon",
-            str(VEJR_LONGITUDE)
-        ))
-
+        for nogle, vaerdi in defaults:
+            conn.execute("""
+                INSERT OR IGNORE INTO indstillinger (nogle, vaerdi)
+                VALUES (?, ?)
+            """, (nogle, vaerdi))
 
         conn.commit()
 
     finally:
-
         conn.close()
 
 
 init_db()
-
 
 # ============================================================
 # HJÆLPEFUNKTIONER
 # ============================================================
 
 def allowed_file(filename):
-
-    if not filename:
+    if not filename or "." not in filename:
         return False
 
-    if "." not in filename:
-        return False
-
-    extension = filename.rsplit(
-        ".",
-        1
-    )[1].lower()
-
+    extension = filename.rsplit(".", 1)[1].lower()
     return extension in ALLOWED_EXTENSIONS
 
 
-# ============================================================
-# HENT INDSTILLING
-# ============================================================
-
-def get_indstilling(
-    conn,
-    nogle,
-    default
-):
-
+def get_indstilling(conn, nogle, default):
     row = conn.execute("""
         SELECT vaerdi
         FROM indstillinger
         WHERE nogle = ?
-    """, (
-        nogle,
-    )).fetchone()
+    """, (nogle,)).fetchone()
 
-    if not row:
+    return row["vaerdi"] if row else default
+
+
+def set_indstilling(conn, nogle, vaerdi):
+    conn.execute("""
+        INSERT INTO indstillinger (nogle, vaerdi)
+        VALUES (?, ?)
+        ON CONFLICT(nogle)
+        DO UPDATE SET vaerdi = excluded.vaerdi
+    """, (nogle, str(vaerdi)))
+
+
+def get_int_setting(conn, key, default, minimum=None, maximum=None):
+    value = get_indstilling(conn, key, str(default))
+
+    try:
+        value = int(value)
+    except (ValueError, TypeError):
         return default
 
-    return row["vaerdi"]
+    if minimum is not None and value < minimum:
+        return default
 
+    if maximum is not None and value > maximum:
+        return default
 
-# ============================================================
-# GEM INDSTILLING
-# ============================================================
+    return value
 
-def gem_indstilling(
-    conn,
-    nogle,
-    vaerdi
-):
-
-    conn.execute("""
-        INSERT OR IGNORE INTO indstillinger
-        (nogle, vaerdi)
-        VALUES (?, ?)
-    """, (
-        nogle,
-        str(vaerdi)
-    ))
-
-    conn.execute("""
-        UPDATE indstillinger
-        SET vaerdi = ?
-        WHERE nogle = ?
-    """, (
-        str(vaerdi),
-        nogle
-    ))
-
-
-# ============================================================
-# BILLEDHASTIGHED
-# ============================================================
 
 def get_billed_sekunder(conn):
-
-    value = get_indstilling(
+    return get_int_setting(
         conn,
         "billed_sekunder",
-        DEFAULT_BILLED_SEKUNDER
+        DEFAULT_BILLED_SEKUNDER,
+        1,
+        120
     )
 
-    try:
-
-        sekunder = int(value)
-
-        if sekunder < 1:
-            return DEFAULT_BILLED_SEKUNDER
-
-        return sekunder
-
-    except (
-        ValueError,
-        TypeError
-    ):
-
-        return DEFAULT_BILLED_SEKUNDER
-
-
-# ============================================================
-# TICKER-HASTIGHED
-# ============================================================
 
 def get_ticker_sekunder(conn):
-
-    value = get_indstilling(
+    return get_int_setting(
         conn,
         "ticker_sekunder",
-        DEFAULT_TICKER_SEKUNDER
+        DEFAULT_TICKER_SEKUNDER,
+        5,
+        300
     )
 
-    try:
 
-        sekunder = int(value)
-
-        if sekunder < 5:
-            return DEFAULT_TICKER_SEKUNDER
-
-        return sekunder
-
-    except (
-        ValueError,
-        TypeError
-    ):
-
-        return DEFAULT_TICKER_SEKUNDER
+def get_dr_interval_sekunder(conn):
+    return get_int_setting(
+        conn,
+        "dr_interval_sekunder",
+        DEFAULT_DR_INTERVAL_SEKUNDER,
+        30,
+        3600
+    )
 
 
-# ============================================================
-# DISKPLADS
-# ============================================================
+def get_dr_antal(conn):
+    return get_int_setting(
+        conn,
+        "dr_antal",
+        DEFAULT_DR_ANTAL,
+        1,
+        20
+    )
 
-def hent_diskplads():
-
-    try:
-
-        total, brugt, ledig = shutil.disk_usage("/")
-
-        total_gb = total / (1024 ** 3)
-        brugt_gb = brugt / (1024 ** 3)
-        ledig_gb = ledig / (1024 ** 3)
-
-        brugt_procent = (
-            brugt / total
-        ) * 100
-
-
-        return {
-            "total": round(total_gb, 1),
-            "brugt": round(brugt_gb, 1),
-            "ledig": round(ledig_gb, 1),
-            "brugt_procent": round(
-                brugt_procent,
-                1
-            )
-        }
-
-    except Exception as error:
-
-        print(
-            "Kunne ikke hente diskplads:",
-            error
-        )
-
-        return {
-            "total": 0,
-            "brugt": 0,
-            "ledig": 0,
-            "brugt_procent": 0
-        }
-
-
-# ============================================================
-# LOKALE NYHEDER
-# ============================================================
 
 def hent_lokale_nyheder(conn):
-
     rows = conn.execute("""
         SELECT tekst
         FROM ticker
         ORDER BY id ASC
     """).fetchall()
 
-    return [
-        row["tekst"]
-        for row in rows
-    ]
+    return [row["tekst"] for row in rows]
 
+
+def hent_alle_nyheder_til_admin(conn):
+    rows = conn.execute("""
+        SELECT id, tekst
+        FROM ticker
+        ORDER BY id ASC
+    """).fetchall()
+
+    return rows
 
 # ============================================================
 # VEJR
 # ============================================================
 
 def hent_vejr():
-
     by = VEJR_BY
     latitude = str(VEJR_LATITUDE)
     longitude = str(VEJR_LONGITUDE)
@@ -482,106 +268,68 @@ def hent_vejr():
     beskrivelse = "Henter vejr..."
     ikon = "cloud-sun"
 
-
     try:
-
         conn = get_db_connection()
 
-        by = get_indstilling(
-            conn,
-            "vejr_by",
-            VEJR_BY
-        )
-
-        latitude = get_indstilling(
-            conn,
-            "vejr_lat",
-            str(VEJR_LATITUDE)
-        )
-
-        longitude = get_indstilling(
-            conn,
-            "vejr_lon",
-            str(VEJR_LONGITUDE)
-        )
+        by = get_indstilling(conn, "vejr_by", VEJR_BY)
+        latitude = get_indstilling(conn, "vejr_lat", str(VEJR_LATITUDE))
+        longitude = get_indstilling(conn, "vejr_lon", str(VEJR_LONGITUDE))
 
         conn.close()
 
     except Exception as error:
-
-        print(
-            "Kunne ikke hente vejrindstillinger:",
-            error
-        )
-
+        print("Kunne ikke hente vejr-indstillinger:", error)
 
     weather_codes = {
-
         0: "Skyfrit",
         1: "Næsten skyfrit",
         2: "Delvist skyet",
         3: "Skyet",
-
         45: "Tåget",
         48: "Rimtåge",
-
         51: "Let støvregn",
         53: "Støvregn",
         55: "Tæt støvregn",
-
         61: "Let regn",
         63: "Regnvejr",
         65: "Kraftig regn",
-
         71: "Let snevejr",
         73: "Snevejr",
         75: "Tæt snevejr",
-
         80: "Lettere regnbyger",
         81: "Regnbyger",
         82: "Kraftige regnbyger",
-
         95: "Tordenvejr",
         96: "Tordenvejr med hagl",
-        99: "Kraftigt tordenvejr med hagl"
+        99: "Kraftigt tordenvejr med hagl",
     }
 
-
     weather_icons = {
-
         0: "sun-fill",
         1: "cloud-sun-fill",
         2: "cloud-sun",
         3: "cloud-fill",
-
         45: "cloud-haze",
         48: "cloud-haze2",
-
         51: "cloud-drizzle",
         53: "cloud-drizzle",
         55: "cloud-drizzle-fill",
-
         61: "cloud-rain",
         63: "cloud-rain-fill",
         65: "cloud-rain-heavy-fill",
-
         71: "cloud-snow",
         73: "cloud-snow-fill",
         75: "snow",
-
         80: "cloud-lightning-rain",
         81: "cloud-lightning-rain-fill",
         82: "cloud-rain-heavy",
-
         95: "cloud-lightning-fill",
         96: "cloud-hail",
-        99: "cloud-hail-fill"
+        99: "cloud-hail-fill",
     }
 
-
     try:
-
-        weather_url = (
+        url = (
             "https://api.open-meteo.com/v1/forecast"
             f"?latitude={latitude}"
             f"&longitude={longitude}"
@@ -589,206 +337,110 @@ def hent_vejr():
             "&timezone=Europe%2FCopenhagen"
         )
 
-        response = requests.get(
-            weather_url,
-            timeout=10
-        )
-
+        response = requests.get(url, timeout=10)
         response.raise_for_status()
 
-        weather_data = response.json()
-
-        current = weather_data.get(
-            "current",
-            {}
-        )
-
+        current = response.json().get("current", {})
 
         if current:
-
-            grader = round(
-                current.get(
-                    "temperature_2m",
-                    0
-                )
-            )
-
+            grader = round(current.get("temperature_2m", 0))
             temperatur = f"{grader}°C"
 
-
-            code = current.get(
-                "weather_code"
-            )
-
-
-            beskrivelse = weather_codes.get(
-                code,
-                "Skiftende vejr"
-            )
-
-
-            ikon = weather_icons.get(
-                code,
-                "cloud-sun"
-            )
-
+            code = current.get("weather_code")
+            beskrivelse = weather_codes.get(code, "Skiftende vejr")
+            ikon = weather_icons.get(code, "cloud-sun")
 
     except Exception as error:
+        print("Vejrfejl:", error)
 
-        print(
-            "Vejrfejl:",
-            error
-        )
-
-
-    return (
-        by,
-        temperatur,
-        beskrivelse,
-        ikon
-    )
-
+    return by, temperatur, beskrivelse, ikon
 
 # ============================================================
 # DR NYHEDER
 # ============================================================
 
 def hent_dr_nyheder():
-
     global news_cache
 
     now = time.time()
 
+    conn = get_db_connection()
 
+    try:
+        antal = get_dr_antal(conn)
+    finally:
+        conn.close()
+
+    # Cache skal stadig respektere det valgte interval.
     if (
-        now - news_cache["timestamp"]
-        < NYHED_CACHE_SEKUNDER
+        news_cache["data"]
+        and now - news_cache["timestamp"] < NYHED_CACHE_SEKUNDER
+        and len(news_cache["data"]) >= antal
     ):
-
-        return news_cache["data"]
-
+        return news_cache["data"][:antal]
 
     nyheder = []
 
-
-    headers = {
-        "User-Agent": "Infoscreen/1.0"
-    }
-
-
     try:
-
         response = requests.get(
             DR_RSS_URL,
-            headers=headers,
+            headers={"User-Agent": "Infoscreen/1.0"},
             timeout=5
         )
-
         response.raise_for_status()
 
+        feed = feedparser.parse(response.content)
 
-        feed = feedparser.parse(
-            response.content
-        )
-
-
-        for entry in feed.entries[:5]:
-
-            titel = entry.get(
-                "title"
-            )
-
+        for entry in feed.entries[:antal]:
+            titel = entry.get("title")
 
             if titel:
-
                 nyheder.append(
                     f"++ DR NYHEDER: {titel} ++"
                 )
 
-
     except Exception as error:
-
-        print(
-            f"Kunne ikke hente DR RSS: {error}"
-        )
-
+        print(f"Kunne ikke hente DR RSS: {error}")
 
         if news_cache["data"]:
-
-            return news_cache["data"]
-
+            return news_cache["data"][:antal]
 
     news_cache = {
         "timestamp": now,
         "data": nyheder
     }
 
-
     return nyheder
-
 
 # ============================================================
 # LOGIN
 # ============================================================
 
-@app.route(
-    "/login",
-    methods=["GET", "POST"]
-)
+@app.route("/login", methods=["GET", "POST"])
 def login():
-
     if request.method == "POST":
-
-        brugernavn = request.form.get(
-            "brugernavn",
-            ""
-        ).strip()
-
-        kode = request.form.get(
-            "kode",
-            ""
-        ).strip()
-
+        brugernavn = request.form.get("brugernavn", "").strip()
+        kode = request.form.get("kode", "").strip()
 
         if (
             brugernavn == ADMIN_BRUGERNAVN
             and kode == ADMIN_KODE
         ):
-
             session["logget_ind"] = True
-
-            return redirect(
-                url_for("admin")
-            )
-
+            return redirect(url_for("admin"))
 
         return render_template(
             "login.html",
             fejl="Forkert brugernavn eller kode"
         )
 
+    return render_template("login.html")
 
-    return render_template(
-        "login.html"
-    )
-
-
-# ============================================================
-# LOGOUT
-# ============================================================
 
 @app.route("/logout")
 def logout():
-
-    session.pop(
-        "logget_ind",
-        None
-    )
-
-    return redirect(
-        url_for("login")
-    )
-
+    session.pop("logget_ind", None)
+    return redirect(url_for("login"))
 
 # ============================================================
 # INFOSKÆRM
@@ -796,15 +448,10 @@ def logout():
 
 @app.route("/")
 def skaerm():
-
     conn = get_db_connection()
 
     try:
-
-        idag = datetime.now().strftime(
-            "%Y-%m-%d"
-        )
-
+        idag = datetime.now().strftime("%Y-%m-%d")
 
         aktive_medier = conn.execute("""
             SELECT filnavn
@@ -816,686 +463,429 @@ def skaerm():
                 OR udloebs_dato >= ?
             )
             ORDER BY id ASC
-        """, (
-            idag,
-        )).fetchall()
+        """, (idag,)).fetchall()
 
-
-        lokale_nyheder = hent_lokale_nyheder(
-            conn
-        )
-
-
-        billed_sekunder = get_billed_sekunder(
-            conn
-        )
-
-
-        ticker_sekunder = get_ticker_sekunder(
-            conn
-        )
+        lokale_nyheder = hent_lokale_nyheder(conn)
+        billed_sekunder = get_billed_sekunder(conn)
+        ticker_sekunder = get_ticker_sekunder(conn)
+        dr_interval_sekunder = get_dr_interval_sekunder(conn)
+        dr_antal = get_dr_antal(conn)
 
     finally:
-
         conn.close()
-
 
     return render_template(
         "skaerm.html",
-
         medier=aktive_medier,
-
         nyheder=lokale_nyheder,
-
         temp="--°C",
-
         beskrivelse="Henter vejr...",
-
         by=VEJR_BY,
-
         sekunder=billed_sekunder,
-
         ticker_sekunder=ticker_sekunder,
-
+        dr_interval_sekunder=dr_interval_sekunder,
+        dr_antal=dr_antal,
         ikon="cloud-sun"
     )
-
 
 # ============================================================
 # ADMIN PANEL
 # ============================================================
 
-@app.route(
-    "/admin",
-    methods=["GET", "POST"]
-)
+@app.route("/admin", methods=["GET", "POST"])
 def admin():
-
     if not session.get("logget_ind"):
-
-        return redirect(
-            url_for("login")
-        )
-
+        return redirect(url_for("login"))
 
     byer_koordinater = {
-
-        "Skovgaarde": {
-            "lat": "56.50941163",
-            "lon": "10.5417551"
-        },
-
-        "Aarhus": {
-            "lat": "56.1567",
-            "lon": "10.2108"
-        },
-
-        "Randers": {
-            "lat": "56.4607",
-            "lon": "10.0357"
-        },
-
-        "Grenaa": {
-            "lat": "56.4158",
-            "lon": "10.8783"
-        },
-
-        "Ebeltoft": {
-            "lat": "56.1952",
-            "lon": "10.6831"
-        },
-
-        "København": {
-            "lat": "55.6761",
-            "lon": "12.5683"
-        },
-
-        "Aalborg": {
-            "lat": "57.0488",
-            "lon": "9.9217"
-        },
-
-        "Odense": {
-            "lat": "55.4038",
-            "lon": "10.4024"
-        }
+        "Skovgaarde": {"lat": "56.50941163", "lon": "10.5417551"},
+        "Aarhus": {"lat": "56.1567", "lon": "10.2108"},
+        "Randers": {"lat": "56.4607", "lon": "10.0357"},
+        "Grenaa": {"lat": "56.4158", "lon": "10.8783"},
+        "Ebeltoft": {"lat": "56.1952", "lon": "10.6831"},
+        "København": {"lat": "55.6761", "lon": "12.5683"},
+        "Aalborg": {"lat": "57.0488", "lon": "9.9217"},
+        "Odense": {"lat": "55.4038", "lon": "10.4024"},
     }
-
 
     conn = get_db_connection()
 
+    try:
+        if request.method == "POST":
 
-    # ========================================================
-    # POST
-    # ========================================================
+            # -----------------------------------------------
+            # NY TICKER-TEKST
+            # -----------------------------------------------
+            if "nyhed_tekst" in request.form:
+                tekst = request.form["nyhed_tekst"].strip()
 
-    if request.method == "POST":
+                if tekst:
+                    conn.execute("""
+                        INSERT INTO ticker (tekst)
+                        VALUES (?)
+                    """, (tekst,))
+                    conn.commit()
 
+            # -----------------------------------------------
+            # UPLOAD
+            # -----------------------------------------------
+            elif "medie_fil" in request.files:
+                fil = request.files["medie_fil"]
+                udloeb = request.form.get("udloeb_dato", "").strip()
 
-        # ----------------------------------------------------
-        # NY TICKER
-        # ----------------------------------------------------
-
-        if "nyhed_tekst" in request.form:
-
-            tekst = request.form[
-                "nyhed_tekst"
-            ].strip()
-
-
-            if tekst:
-
-                conn.execute("""
-                    INSERT INTO ticker (tekst)
-                    VALUES (?)
-                """, (
-                    tekst,
-                ))
-
-                conn.commit()
-
-
-        # ----------------------------------------------------
-        # UPLOAD MEDIE
-        # ----------------------------------------------------
-
-        elif "medie_fil" in request.files:
-
-            fil = request.files[
-                "medie_fil"
-            ]
-
-
-            udloeb = request.form.get(
-                "udloeb_dato",
-                ""
-            ).strip()
-
-
-            if fil and fil.filename:
-
-                filnavn = fil.filename
-
-
-                if allowed_file(
-                    filnavn
-                ):
+                if fil and fil.filename and allowed_file(fil.filename):
+                    filnavn = os.path.basename(fil.filename)
 
                     fil.save(
                         os.path.join(
-                            app.config[
-                                "UPLOAD_FOLDER"
-                            ],
+                            app.config["UPLOAD_FOLDER"],
                             filnavn
                         )
                     )
 
-
                     conn.execute("""
                         INSERT INTO medier
-                        (
-                            filnavn,
-                            aktiv,
-                            udloebs_dato
-                        )
+                        (filnavn, aktiv, udloebs_dato)
                         VALUES (?, 1, ?)
-                    """, (
-                        filnavn,
-                        udloeb
-                    ))
-
+                    """, (filnavn, udloeb))
 
                     conn.commit()
 
+            # -----------------------------------------------
+            # BILLEDHASTIGHED
+            # -----------------------------------------------
+            elif "billed_sekunder" in request.form:
+                try:
+                    value = int(request.form["billed_sekunder"])
 
-        # ----------------------------------------------------
-        # BILLEDHASTIGHED
-        # ----------------------------------------------------
+                    if 1 <= value <= 120:
+                        set_indstilling(
+                            conn,
+                            "billed_sekunder",
+                            value
+                        )
+                        conn.commit()
 
-        elif "billed_sekunder" in request.form:
+                except (ValueError, TypeError):
+                    pass
 
-            sekunder = request.form[
-                "billed_sekunder"
-            ].strip()
+            # -----------------------------------------------
+            # TICKER-HASTIGHED
+            # -----------------------------------------------
+            elif "ticker_sekunder" in request.form:
+                try:
+                    value = int(request.form["ticker_sekunder"])
 
+                    if 5 <= value <= 300:
+                        set_indstilling(
+                            conn,
+                            "ticker_sekunder",
+                            value
+                        )
+                        conn.commit()
 
-            try:
+                except (ValueError, TypeError):
+                    pass
 
-                sekunder_int = int(
-                    sekunder
-                )
+            # -----------------------------------------------
+            # DR INTERVAL + ANTAL
+            # -----------------------------------------------
+            elif "dr_interval_sekunder" in request.form:
+                try:
+                    interval = int(
+                        request.form["dr_interval_sekunder"]
+                    )
+                    antal = int(
+                        request.form["dr_antal"]
+                    )
 
+                    if 30 <= interval <= 3600:
+                        set_indstilling(
+                            conn,
+                            "dr_interval_sekunder",
+                            interval
+                        )
 
-                if 1 <= sekunder_int <= 120:
+                    if 1 <= antal <= 20:
+                        set_indstilling(
+                            conn,
+                            "dr_antal",
+                            antal
+                        )
 
-                    gem_indstilling(
+                    conn.commit()
+
+                    # Tving ny DR-hentning efter ændring.
+                    global news_cache
+                    news_cache = {
+                        "timestamp": 0,
+                        "data": []
+                    }
+
+                except (ValueError, TypeError, KeyError):
+                    pass
+
+            # -----------------------------------------------
+            # VEJR BY
+            # -----------------------------------------------
+            elif "valgt_by" in request.form:
+                by_navn = request.form["valgt_by"]
+
+                if by_navn in byer_koordinater:
+                    set_indstilling(
                         conn,
-                        "billed_sekunder",
-                        sekunder_int
+                        "vejr_by",
+                        by_navn
+                    )
+
+                    set_indstilling(
+                        conn,
+                        "vejr_lat",
+                        byer_koordinater[by_navn]["lat"]
+                    )
+
+                    set_indstilling(
+                        conn,
+                        "vejr_lon",
+                        byer_koordinater[by_navn]["lon"]
                     )
 
                     conn.commit()
 
+            return redirect(url_for("admin"))
 
-            except ValueError:
+        alle_medier = conn.execute("""
+            SELECT *
+            FROM medier
+            ORDER BY id ASC
+        """).fetchall()
 
-                pass
+        alle_nyheder = hent_alle_nyheder_til_admin(conn)
 
+        billed_sekunder = get_billed_sekunder(conn)
+        ticker_sekunder = get_ticker_sekunder(conn)
+        dr_interval_sekunder = get_dr_interval_sekunder(conn)
+        dr_antal = get_dr_antal(conn)
 
-        # ----------------------------------------------------
-        # TICKER-HASTIGHED
-        # ----------------------------------------------------
-
-        elif "ticker_sekunder" in request.form:
-
-            sekunder = request.form[
-                "ticker_sekunder"
-            ].strip()
-
-
-            try:
-
-                sekunder_int = int(
-                    sekunder
-                )
-
-
-                if 5 <= sekunder_int <= 300:
-
-                    gem_indstilling(
-                        conn,
-                        "ticker_sekunder",
-                        sekunder_int
-                    )
-
-                    conn.commit()
-
-
-            except ValueError:
-
-                pass
-
-
-        # ----------------------------------------------------
-        # VEJR
-        # ----------------------------------------------------
-
-        elif "valgt_by" in request.form:
-
-            by_navn = request.form[
-                "valgt_by"
-            ]
-
-
-            if by_navn in byer_koordinater:
-
-                gem_indstilling(
-                    conn,
-                    "vejr_by",
-                    by_navn
-                )
-
-                gem_indstilling(
-                    conn,
-                    "vejr_lat",
-                    byer_koordinater[
-                        by_navn
-                    ]["lat"]
-                )
-
-                gem_indstilling(
-                    conn,
-                    "vejr_lon",
-                    byer_koordinater[
-                        by_navn
-                    ]["lon"]
-                )
-
-                conn.commit()
-
-
-        conn.close()
-
-
-        return redirect(
-            url_for("admin")
+        nuvaerende_by = get_indstilling(
+            conn,
+            "vejr_by",
+            VEJR_BY
         )
 
+    finally:
+        conn.close()
 
-    # ========================================================
-    # DATA
-    # ========================================================
-
-    alle_medier = conn.execute("""
-        SELECT *
-        FROM medier
-        ORDER BY id ASC
-    """).fetchall()
-
-
-    alle_nyheder = conn.execute("""
-        SELECT *
-        FROM ticker
-        ORDER BY id ASC
-    """).fetchall()
-
-
-    billed_sekunder = get_billed_sekunder(
-        conn
-    )
-
-
-    ticker_sekunder = get_ticker_sekunder(
-        conn
-    )
-
-
-    nuvaerende_by = get_indstilling(
-        conn,
-        "vejr_by",
-        VEJR_BY
-    )
-
-
-    conn.close()
-
-
-    # ========================================================
+    # -----------------------------------------------
     # DISKPLADS
-    # ========================================================
+    # -----------------------------------------------
+    try:
+        import shutil
 
-    diskplads = hent_diskplads()
+        total, used, free = shutil.disk_usage(BASE_DIR)
 
+        total_gb = total / (1024 ** 3)
+        used_gb = used / (1024 ** 3)
+        free_gb = free / (1024 ** 3)
 
-    # ========================================================
-    # DATO
-    # ========================================================
+        used_percent = (used / total * 100) if total else 0
 
-    current_date = datetime.now().strftime(
-        "%Y-%m-%d"
-    )
+    except Exception:
+        total_gb = used_gb = free_gb = used_percent = 0
 
+    current_date = datetime.now().strftime("%Y-%m-%d")
 
     return render_template(
-
         "admin.html",
-
         medier=alle_medier,
-
         nyheder=alle_nyheder,
-
         nuvaerende_sekunder=billed_sekunder,
-
         nuvaerende_ticker_sekunder=ticker_sekunder,
-
+        dr_interval_sekunder=dr_interval_sekunder,
+        dr_antal=dr_antal,
         nuvaerende_by=nuvaerende_by,
-
-        byer=list(
-            byer_koordinater.keys()
-        ),
-
+        byer=list(byer_koordinater.keys()),
         current_date=current_date,
-
-        diskplads=diskplads
+        disk_total_gb=f"{total_gb:.1f}",
+        disk_used_gb=f"{used_gb:.1f}",
+        disk_free_gb=f"{free_gb:.1f}",
+        disk_used_percent=round(used_percent, 1),
     )
-
 
 # ============================================================
 # SKIFT STATUS
 # ============================================================
 
-@app.route(
-    "/skift-status/<int:id>",
-    methods=["POST"]
-)
+@app.route("/skift-status/<int:id>", methods=["POST"])
 def skift_status(id):
-
     if not session.get("logget_ind"):
-
         return jsonify(
             success=False,
             error="Ikke logget ind"
         ), 401
 
-
-    data = request.get_json(
-        silent=True
-    )
-
+    data = request.get_json(silent=True)
 
     if not data:
-
         return jsonify(
             success=False,
             error="Ingen data modtaget"
         ), 400
 
-
-    ny_status = (
-        1
-        if data.get("aktiv")
-        else 0
-    )
-
+    ny_status = 1 if data.get("aktiv") else 0
 
     conn = get_db_connection()
 
-
     try:
-
         cursor = conn.execute("""
             UPDATE medier
             SET aktiv = ?
             WHERE id = ?
-        """, (
-            ny_status,
-            id
-        ))
+        """, (ny_status, id))
 
         conn.commit()
 
-
         if cursor.rowcount == 0:
-
             return jsonify(
                 success=False,
                 error="Medie ikke fundet"
             ), 404
 
     finally:
-
         conn.close()
 
-
-    return jsonify(
-        success=True
-    )
-
+    return jsonify(success=True)
 
 # ============================================================
 # ÆNDR UDLØBSDATO
 # ============================================================
 
-@app.route(
-    "/aendre-udloeb/<int:id>",
-    methods=["POST"]
-)
+@app.route("/aendre-udloeb/<int:id>", methods=["POST"])
 def aendre_udloeb(id):
-
     if not session.get("logget_ind"):
+        return redirect(url_for("login"))
 
-        return redirect(
-            url_for("login")
-        )
-
-
-    udloeb = request.form.get(
-        "udloeb_dato",
-        ""
-    ).strip()
-
-
-    if not udloeb:
-
-        udloeb = None
-
+    udloeb = request.form.get("udloeb_dato", "").strip()
+    udloeb = udloeb if udloeb else None
 
     conn = get_db_connection()
 
-
     try:
-
         cursor = conn.execute("""
             UPDATE medier
             SET udloebs_dato = ?
             WHERE id = ?
-        """, (
-            udloeb,
-            id
-        ))
+        """, (udloeb, id))
 
         conn.commit()
 
-
         if cursor.rowcount == 0:
-
-            return (
-                "Medie ikke fundet",
-                404
-            )
+            return "Medie ikke fundet", 404
 
     finally:
-
         conn.close()
 
-
-    return redirect(
-        url_for("admin")
-    )
-
+    return redirect(url_for("admin"))
 
 # ============================================================
 # SLET MEDIE
 # ============================================================
 
-@app.route(
-    "/slet/<int:id>"
-)
+@app.route("/slet/<int:id>")
 def slet(id):
-
     if not session.get("logget_ind"):
-
-        return redirect(
-            url_for("login")
-        )
-
+        return redirect(url_for("login"))
 
     conn = get_db_connection()
 
-
     try:
-
         medie = conn.execute("""
             SELECT filnavn
             FROM medier
             WHERE id = ?
-        """, (
-            id,
-        )).fetchone()
-
+        """, (id,)).fetchone()
 
         if medie:
-
             filsti = os.path.join(
-                app.config[
-                    "UPLOAD_FOLDER"
-                ],
+                app.config["UPLOAD_FOLDER"],
                 medie["filnavn"]
             )
 
-
             try:
-
-                os.remove(
-                    filsti
-                )
-
+                os.remove(filsti)
             except FileNotFoundError:
-
                 pass
-
 
             conn.execute("""
                 DELETE FROM medier
                 WHERE id = ?
-            """, (
-                id,
-            ))
+            """, (id,))
 
             conn.commit()
 
     finally:
-
         conn.close()
 
-
-    return redirect(
-        url_for("admin")
-    )
-
+    return redirect(url_for("admin"))
 
 # ============================================================
 # SLET NYHED
 # ============================================================
 
-@app.route(
-    "/slet-nyhed/<int:id>"
-)
+@app.route("/slet-nyhed/<int:id>")
 def slet_nyhed(id):
-
     if not session.get("logget_ind"):
-
-        return redirect(
-            url_for("login")
-        )
-
+        return redirect(url_for("login"))
 
     conn = get_db_connection()
 
-
     try:
-
         conn.execute("""
             DELETE FROM ticker
             WHERE id = ?
-        """, (
-            id,
-        ))
+        """, (id,))
 
         conn.commit()
 
     finally:
-
         conn.close()
 
-
-    return redirect(
-        url_for("admin")
-    )
-
+    return redirect(url_for("admin"))
 
 # ============================================================
 # HENT NYHEDER
 # ============================================================
 
-@app.route(
-    "/hent-nyheder"
-)
+@app.route("/hent-nyheder")
 def hent_nyheder():
-
     conn = get_db_connection()
 
-
     try:
-
-        nyheder = hent_lokale_nyheder(
-            conn
-        )
-
+        lokale = hent_lokale_nyheder(conn)
+        dr_interval = get_dr_interval_sekunder(conn)
+        dr_antal = get_dr_antal(conn)
     finally:
-
         conn.close()
 
-
-    nyheder.extend(
-        hent_dr_nyheder()
-    )
-
+    dr = hent_dr_nyheder()
 
     return jsonify(
-        nyheder=nyheder
+        nyheder=lokale + dr,
+        dr_interval_sekunder=dr_interval,
+        dr_antal=dr_antal
     )
-
 
 # ============================================================
 # HENT AKTIVE MEDIER
 # ============================================================
 
-@app.route(
-    "/hent-aktive-medier"
-)
+@app.route("/hent-aktive-medier")
 def hent_aktive_medier():
-
-    idag = datetime.now().strftime(
-        "%Y-%m-%d"
-    )
-
+    idag = datetime.now().strftime("%Y-%m-%d")
 
     conn = get_db_connection()
 
-
     try:
-
         medier = conn.execute("""
             SELECT filnavn
             FROM medier
@@ -1506,111 +896,67 @@ def hent_aktive_medier():
                 OR udloebs_dato >= ?
             )
             ORDER BY id ASC
-        """, (
-            idag,
-        )).fetchall()
+        """, (idag,)).fetchall()
 
-
-        sekunder = get_billed_sekunder(
-            conn
-        )
+        sekunder = get_billed_sekunder(conn)
 
     finally:
-
         conn.close()
 
-
     return jsonify(
-
-        medier=[
-            medie["filnavn"]
-            for medie in medier
-        ],
-
+        medier=[medie["filnavn"] for medie in medier],
         sekunder=sekunder
     )
-
 
 # ============================================================
 # HENT TICKER-INDSTILLINGER
 # ============================================================
 
-@app.route(
-    "/hent-ticker-indstillinger"
-)
+@app.route("/hent-ticker-indstillinger")
 def hent_ticker_indstillinger():
-
     conn = get_db_connection()
 
-
     try:
-
-        sekunder = get_ticker_sekunder(
-            conn
-        )
-
+        sekunder = get_ticker_sekunder(conn)
     finally:
-
         conn.close()
 
-
     return jsonify(
-        sekunder=sekunder
+        sekunder=sekunder,
+        ticker_sekunder=sekunder
     )
-
 
 # ============================================================
 # HENT VEJR
 # ============================================================
 
-@app.route(
-    "/hent-vejr"
-)
+@app.route("/hent-vejr")
 def hent_vejr_api():
-
-    (
-        by,
-        temperatur,
-        beskrivelse,
-        ikon
-    ) = hent_vejr()
-
+    by, temperatur, beskrivelse, ikon = hent_vejr()
 
     return jsonify(
-
         by=by,
-
         temp=temperatur,
-
         beskrivelse=beskrivelse,
-
         ikon=ikon
     )
-
 
 # ============================================================
 # UPLOADS
 # ============================================================
 
-@app.route(
-    "/uploads/<path:filename>"
-)
+@app.route("/uploads/<path:filename>")
 def uploaded_file(filename):
-
     return send_from_directory(
-        app.config[
-            "UPLOAD_FOLDER"
-        ],
+        app.config["UPLOAD_FOLDER"],
         filename
     )
-
 
 # ============================================================
 # START
 # ============================================================
 
 if __name__ == "__main__":
-
     app.run(
         debug=True,
         host="0.0.0.0",
