@@ -839,6 +839,55 @@ setInterval(
     300000
 );
 
+/* ============================================================
+   BURN-IN BESKYTTELSE - UR OG DATO
+   ============================================================ */
+
+let burnInPosition = 0;
+
+function skiftBurnIn() {
+
+    const clock =
+        document.querySelector(".clock-section");
+
+    if (!clock) {
+        return;
+    }
+
+
+    /* Fjern gammel position */
+
+    clock.classList.remove(
+        "burnin-0",
+        "burnin-1",
+        "burnin-2",
+        "burnin-3",
+        "burnin-4"
+    );
+
+
+    /* Næste position */
+
+    burnInPosition =
+        (burnInPosition + 1) % 5;
+
+
+    clock.classList.add(
+        "burnin-" + burnInPosition
+    );
+
+}
+
+
+/*
+ * Flyt uret lidt hvert 2. minut
+ */
+
+setInterval(
+    skiftBurnIn,
+    120000
+);
+
 </script>
 
 

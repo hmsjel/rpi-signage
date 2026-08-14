@@ -1,151 +1,373 @@
+/* ============================================================
+   GENERELT
+   ============================================================ */
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+html,
+body {
+    width: 100%;
+    height: 100%;
+}
+
 body {
     background: #000;
     color: #fff;
-    font-family: 'Arial', sans-serif;
+    font-family: Arial, sans-serif;
     overflow: hidden;
-    width: 100vw;
-    height: 100vh;
-    display: flex; /* Sætter medier og sidebar skarpt op ved siden af hinanden */
 }
 
-/* Venstre side: Bruger al plads på skærmen UNDTAGEN de 350px til sidebaren */
+
+/* ============================================================
+   MEDIEOMRÅDE
+   ============================================================ */
+
 .media-container {
-    position: relative;
-    flex: 1; /* Tvinger mediefeltet til at fylde alt det resterende ud */
-    height: calc(100vh - 60px); /* Giver plads til nyhedsbjælken i bunden */
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 200px;
+    bottom: 60px;
+
     background: #000;
     overflow: hidden;
 }
 
+
+/* Alle medier */
+
 .slide {
     position: absolute;
+
     top: 0;
     left: 0;
+
     width: 100%;
     height: 100%;
-    object-fit: contain; /* Vises 100% fuldt ud uden nogen form for beskæring */
+
+    object-fit: contain;
+
     display: none;
 }
 
-.active {
+
+/* Aktivt medie */
+
+.slide.active {
     display: block;
 }
 
-/* Højre side: En fast, mørk og ren sidebar, så billederne ALDRIG kan gå herind */
+
+/* ============================================================
+   SIDEPANEL
+   ============================================================ */
+
 .sidebar {
-    width: 200px; /* Fast bredde */
-    height: calc(100vh - 60px);
-    background: #111; /* Mørk solid baggrund */
+    position: absolute;
+
+    top: 0;
+    right: 0;
+    bottom: 60px;
+
+    width: 200px;
+
+    background: #111;
+
     border-left: 1px solid #222;
+
     display: flex;
     flex-direction: column;
     align-items: center;
+
     padding: 30px 20px;
+
     text-align: center;
-    box-shadow: -5px 0 20px rgba(0,0,0,0.5);
+
+    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.5);
+
+    z-index: 5;
 }
 
-/* Ur Sektion (Gjort mindre og mere diskret) */
+
+/* ============================================================
+   UR
+   ============================================================ */
+
 .clock-section {
-    margin-bottom: 5px;
-    border-bottom: 1px solid #222;
-    padding-bottom: 20px;
     width: 100%;
+
+    margin-bottom: 5px;
+
+    padding-bottom: 20px;
+
+    border-bottom: 1px solid #222;
 }
+
+
+/* Dato */
 
 #date {
-    font-size: 14px; /* RETTET: Mindre skriftstørrelse */
+    font-size: 14px;
+
     letter-spacing: 1.5px;
+
     color: #888;
+
     text-transform: uppercase;
 }
+
+
+/* Klokkeslæt */
 
 #time {
-    font-size: 38px; /* RETTET: Skruet ned fra 54px for et mere elegant look */
+    margin-top: 5px;
+
+    font-size: 38px;
+
     font-weight: bold;
+
     color: #fff;
-    margin-top: 5px;
 }
 
-/* Vejrudsigt Sektion */
-.weather-section {
-    margin-top: 5px;
-    padding-top: 20px;
+
+/* ============================================================
+   VEJR
+   ============================================================ */
+
+.weather {
     width: 100%;
+
+    margin-top: 5px;
+
+    padding-top: 20px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-.weather-section h3 {
-    font-size: 13px;
-    color: #007bff;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+
+/* Vejr-ikon */
+
+#weather-icon {
+    font-size: 50px;
+
     margin-bottom: 15px;
+
+    color: #fff;
 }
+
+
+/* Information */
+
+.weather-info {
+    width: 100%;
+
+    text-align: center;
+}
+
+
+/* By */
+
+#weather-city {
+    font-size: 18px;
+
+    font-weight: bold;
+
+    color: #fff;
+
+    margin-bottom: 8px;
+}
+
+
+/* Temperatur */
 
 #weather-temp {
     font-size: 42px;
+
     font-weight: bold;
+
+    color: #fff;
 }
 
-#weather-desc {
+
+/* Beskrivelse */
+
+#weather-description {
     font-size: 15px;
+
     color: #aaa;
+
     margin-top: 5px;
+
     text-transform: capitalize;
 }
 
-/* Nyhedsticker helt i bunden */
+
+/* ============================================================
+   NYHEDSBJÆLKE
+   ============================================================ */
+
 .ticker-wrap {
     position: absolute;
-    bottom: 0;
+
     left: 0;
-    width: 100vw;
+    right: 0;
+    bottom: 0;
+
+    width: 100%;
     height: 60px;
+
     background: rgba(0, 0, 0, 0.95);
+
     border-top: 3px solid #e60000;
+
     display: flex;
     align-items: center;
+
     overflow: hidden;
+
     z-index: 10;
 }
 
+
+/* "Seneste nyt" */
+
 .ticker-label {
-    background: #e60000;
-    color: white;
-    font-weight: bold;
-    padding: 0 20px;
-    font-size: 16px;
-    text-transform: uppercase;
     position: absolute;
+
     left: 0;
-    z-index: 11;
+
     height: 100%;
+
+    padding: 0 20px;
+
+    background: #e60000;
+
+    color: #fff;
+
+    font-size: 16px;
+
+    font-weight: bold;
+
+    text-transform: uppercase;
+
     display: flex;
     align-items: center;
+
+    z-index: 11;
 }
+
+
+/* Selve tickeren */
 
 .ticker {
     display: flex;
     align-items: center;
+
     white-space: nowrap;
+
     padding-left: 100%;
+
     animation: ticker-move 45s linear infinite;
 }
 
+
+/* Nyhedstekst */
+
 .ticker-item {
     display: inline-block;
+
     padding: 0 40px;
+
     font-size: 20px;
+
     color: #fff;
 }
 
+
+/* ============================================================
+   TICKER ANIMATION
+   ============================================================ */
+
 @keyframes ticker-move {
-    0% { transform: translate3d(0, 0, 0); }
-    100% { transform: translate3d(-100%, 0, 0); }
+
+    0% {
+        transform: translate3d(0, 0, 0);
+    }
+
+    100% {
+        transform: translate3d(-100%, 0, 0);
+    }
+
 }
+
+/* ============================================================
+   BURN-IN BESKYTTELSE / PIXEL SHIFT
+   ============================================================ */
+
+/*
+   Hele hovedindholdet flyttes ganske få pixels med mellemrum.
+   Dette reducerer risikoen for burn-in på skærme, der kører
+   mange timer dagligt.
+*/
+
+.media-container,
+.sidebar {
+    transition: transform 1.5s ease-in-out;
+}
+
+
+/* De forskellige pixel-positioner */
+
+.burnin-position-0 {
+    transform: translate(0, 0);
+}
+
+.burnin-position-1 {
+    transform: translate(2px, 0);
+}
+
+.burnin-position-2 {
+    transform: translate(0, 2px);
+}
+
+.burnin-position-3 {
+    transform: translate(-2px, -2px);
+}
+
+/* ============================================================
+   BURN-IN BESKYTTELSE - UR OG DATO
+   ============================================================ */
+
+.clock-section,
+#date,
+#time {
+    transition: transform 1s ease-in-out;
+}
+
+.burnin-0 {
+    transform: translate(0, 0);
+}
+
+.burnin-1 {
+    transform: translate(2px, 0);
+}
+
+.burnin-2 {
+    transform: translate(0, 2px);
+}
+
+.burnin-3 {
+    transform: translate(-2px, -1px);
+}
+
+.burnin-4 {
+    transform: translate(-1px, 2px);
+}
+
+

@@ -144,8 +144,7 @@ def init_db():
 
         # ----------------------------------------------------
         # SIKKERHED:
-        # Hvis databasen allerede eksisterer fra en ældre
-        # version, sørger vi for at udloebs_dato findes.
+        # Sørg for at udloebs_dato findes
         # ----------------------------------------------------
 
         kolonner = conn.execute(
@@ -293,7 +292,6 @@ def hent_lokale_nyheder(conn):
 
 def hent_vejr():
 
-    # Standardværdier
     by = "Skovgaarde"
     latitude = "56.50941163"
     longitude = "10.5417551"
@@ -543,7 +541,6 @@ def hent_dr_nyheder():
             f"Kunne ikke hente DR RSS: {error}"
         )
 
-        # Brug gamle nyheder hvis vi har dem
         if news_cache["data"]:
 
             return news_cache["data"]
@@ -572,14 +569,7 @@ def skaerm():
         )
 
         # ----------------------------------------------------
-        # VIGTIGT:
-        #
-        # Hent kun aktive medier som:
-        #
-        # - ikke har en udløbsdato
-        # ELLER
-        # - har en udløbsdato i dag eller fremover
-        #
+        # Kun aktive medier der ikke er udløbet
         # ----------------------------------------------------
 
         aktive_medier = conn.execute("""
@@ -794,8 +784,6 @@ def admin():
 
             if by_navn in byer_koordinater:
 
-                # Sørg for at vejr-indstillingerne findes
-
                 conn.execute("""
                     INSERT OR IGNORE INTO indstillinger
                     (nogle, vaerdi)
@@ -814,8 +802,6 @@ def admin():
                     VALUES ("vejr_lon", "10.5417551")
                 """)
 
-                # Gem ny by
-
                 conn.execute("""
                     UPDATE indstillinger
                     SET vaerdi = ?
@@ -823,8 +809,6 @@ def admin():
                 """, (
                     by_navn,
                 ))
-
-                # Gem latitude
 
                 conn.execute("""
                     UPDATE indstillinger
@@ -835,8 +819,6 @@ def admin():
                         by_navn
                     ]["lat"],
                 ))
-
-                # Gem longitude
 
                 conn.execute("""
                     UPDATE indstillinger
@@ -896,6 +878,14 @@ def admin():
 
     conn.close()
 
+    # --------------------------------------------------------
+    # Dagens dato til admin.html
+    # --------------------------------------------------------
+
+    current_date = datetime.now().strftime(
+        "%Y-%m-%d"
+    )
+
     return render_template(
         "admin.html",
 
@@ -909,7 +899,9 @@ def admin():
 
         byer=list(
             byer_koordinater.keys()
-        )
+        ),
+
+        current_date=current_date
     )
 
 
@@ -968,6 +960,59 @@ def skift_status(id):
 
     return jsonify(
         success=True
+    )
+
+
+# ============================================================
+# ÆNDR UDLØBSDATO
+# ============================================================
+
+@app.route(
+    "/aendre-udloeb/<int:id>",
+    methods=["POST"]
+)
+def aendre_udloeb(id):
+
+    udloeb = request.form.get(
+        "udloeb_dato",
+        ""
+    ).strip()
+
+    conn = get_db_connection()
+
+    try:
+
+        # Tom dato betyder:
+        # Ingen udløbsdato
+
+        if not udloeb:
+
+            udloeb = None
+
+        cursor = conn.execute("""
+            UPDATE medier
+            SET udloebs_dato = ?
+            WHERE id = ?
+        """, (
+            udloeb,
+            id
+        ))
+
+        conn.commit()
+
+        if cursor.rowcount == 0:
+
+            return (
+                "Medie ikke fundet",
+                404
+            )
+
+    finally:
+
+        conn.close()
+
+    return redirect(
+        url_for("admin")
     )
 
 
@@ -1106,14 +1151,6 @@ def hent_aktive_medier():
     conn = get_db_connection()
 
     try:
-
-        # ----------------------------------------------------
-        # VIGTIGT:
-        #
-        # Her filtreres udløbne medier også fra.
-        #
-        # Det var denne del der manglede tidligere.
-        # ----------------------------------------------------
 
         medier = conn.execute("""
             SELECT filnavn
