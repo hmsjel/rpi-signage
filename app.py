@@ -1,6 +1,7 @@
 import os
 import sqlite3
 import time
+from datetime import datetime
 
 import requests
 import feedparser
@@ -15,8 +16,6 @@ from flask import (
     jsonify
 )
 
-from werkzeug.utils import secure_filename
-
 
 # ============================================================
 # FLASK
@@ -29,10 +28,19 @@ app = Flask(__name__)
 # KONFIGURATION
 # ============================================================
 
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+BASE_DIR = os.path.abspath(
+    os.path.dirname(__file__)
+)
 
-DATABASE = os.path.join(BASE_DIR, "skaerm.db")
-UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
+DATABASE = os.path.join(
+    BASE_DIR,
+    "skaerm.db"
+)
+
+UPLOAD_FOLDER = os.path.join(
+    BASE_DIR,
+    "uploads"
+)
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
@@ -52,33 +60,31 @@ ALLOWED_EXTENSIONS = {
 DEFAULT_BILLED_SEKUNDER = 12
 
 
-# Vejr
+# ============================================================
+# VEJR
+# ============================================================
+
 VEJR_BY = "Skovgaarde"
 VEJR_LATITUDE = 56.50941163
 VEJR_LONGITUDE = 10.5417551
 
 
+# ============================================================
 # DR RSS
+# ============================================================
+
 DR_RSS_URL = (
     "https://www.dr.dk/nyheder/service/feeds/allenyheder"
-)
-
-
-# Cache-tider
-VEJR_CACHE_SEKUNDER = 300       # 5 minutter
-NYHED_CACHE_SEKUNDER = 300      # 5 minutter
-
-
-# Opret upload-mappe
-os.makedirs(
-    UPLOAD_FOLDER,
-    exist_ok=True
 )
 
 
 # ============================================================
 # CACHE
 # ============================================================
+
+VEJR_CACHE_SEKUNDER = 300
+NYHED_CACHE_SEKUNDER = 300
+
 
 weather_cache = {
     "timestamp": 0,
@@ -90,6 +96,16 @@ news_cache = {
     "timestamp": 0,
     "data": []
 }
+
+
+# ============================================================
+# UPLOAD-MAPPE
+# ============================================================
+
+os.makedirs(
+    UPLOAD_FOLDER,
+    exist_ok=True
+)
 
 
 # ============================================================
@@ -113,13 +129,44 @@ def init_db():
 
     try:
 
+        # ----------------------------------------------------
+        # MEDIER
+        # ----------------------------------------------------
+
         conn.execute("""
             CREATE TABLE IF NOT EXISTS medier (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 filnavn TEXT NOT NULL,
-                aktiv INTEGER NOT NULL DEFAULT 1
+                aktiv INTEGER NOT NULL DEFAULT 1,
+                udloebs_dato TEXT
             )
         """)
+
+        # ----------------------------------------------------
+        # SIKKERHED:
+        # Hvis databasen allerede eksisterer fra en ældre
+        # version, sørger vi for at udloebs_dato findes.
+        # ----------------------------------------------------
+
+        kolonner = conn.execute(
+            "PRAGMA table_info(medier)"
+        ).fetchall()
+
+        kolonne_navne = [
+            kolonne["name"]
+            for kolonne in kolonner
+        ]
+
+        if "udloebs_dato" not in kolonne_navne:
+
+            conn.execute("""
+                ALTER TABLE medier
+                ADD COLUMN udloebs_dato TEXT
+            """)
+
+        # ----------------------------------------------------
+        # TICKER
+        # ----------------------------------------------------
 
         conn.execute("""
             CREATE TABLE IF NOT EXISTS ticker (
@@ -128,6 +175,10 @@ def init_db():
             )
         """)
 
+        # ----------------------------------------------------
+        # INDSTILLINGER
+        # ----------------------------------------------------
+
         conn.execute("""
             CREATE TABLE IF NOT EXISTS indstillinger (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -135,6 +186,10 @@ def init_db():
                 vaerdi TEXT NOT NULL
             )
         """)
+
+        # ----------------------------------------------------
+        # STANDARD BILLEDHASTIGHED
+        # ----------------------------------------------------
 
         conn.execute("""
             INSERT OR IGNORE INTO indstillinger
@@ -152,6 +207,7 @@ def init_db():
         conn.close()
 
 
+# Initialiser database
 init_db()
 
 
@@ -175,6 +231,10 @@ def allowed_file(filename):
     return extension in ALLOWED_EXTENSIONS
 
 
+# ============================================================
+# BILLEDHASTIGHED
+# ============================================================
+
 def get_billed_sekunder(conn):
 
     row = conn.execute("""
@@ -186,6 +246,7 @@ def get_billed_sekunder(conn):
     )).fetchone()
 
     if not row:
+
         return DEFAULT_BILLED_SEKUNDER
 
     try:
@@ -195,6 +256,7 @@ def get_billed_sekunder(conn):
         )
 
         if sekunder < 1:
+
             return DEFAULT_BILLED_SEKUNDER
 
         return sekunder
@@ -206,6 +268,10 @@ def get_billed_sekunder(conn):
 
         return DEFAULT_BILLED_SEKUNDER
 
+
+# ============================================================
+# LOKALE NYHEDER
+# ============================================================
 
 def hent_lokale_nyheder(conn):
 
@@ -221,77 +287,201 @@ def hent_lokale_nyheder(conn):
     ]
 
 
-# ==========================================
-# HJÆLPEFUNKTION: HENT VEJR FRA DATABASE
-# ==========================================
+# ============================================================
+# VEJR
+# ============================================================
 
 def hent_vejr():
-    # Standardværdier hvis databasen er tom
+
+    # Standardværdier
     by = "Skovgaarde"
     latitude = "56.50941163"
     longitude = "10.5417551"
+
     temperatur = "--°C"
     beskrivelse = "Henter vejr..."
     ikon = "cloud-sun"
 
-    # Hent de gemte lokationsindstillinger live fra databasen
+    # --------------------------------------------------------
+    # Hent valgt lokation fra databasen
+    # --------------------------------------------------------
+
     try:
+
         conn = get_db_connection()
-        by_row = conn.execute('SELECT vaerdi FROM indstillinger WHERE nogle = "vejr_by"').fetchone()
-        lat_row = conn.execute('SELECT vaerdi FROM indstillinger WHERE nogle = "vejr_lat"').fetchone()
-        lon_row = conn.execute('SELECT vaerdi FROM indstillinger WHERE nogle = "vejr_lon"').fetchone()
+
+        by_row = conn.execute("""
+            SELECT vaerdi
+            FROM indstillinger
+            WHERE nogle = "vejr_by"
+        """).fetchone()
+
+        lat_row = conn.execute("""
+            SELECT vaerdi
+            FROM indstillinger
+            WHERE nogle = "vejr_lat"
+        """).fetchone()
+
+        lon_row = conn.execute("""
+            SELECT vaerdi
+            FROM indstillinger
+            WHERE nogle = "vejr_lon"
+        """).fetchone()
+
         conn.close()
 
-        if by_row: by = by_row['vaerdi']
-        if lat_row: latitude = lat_row['vaerdi']
-        if lon_row: longitude = lon_row['vaerdi']
-    except Exception as e:
-        print("Kunne ikke hente vejr-indstillinger fra DB:", e)
+        if by_row:
+            by = by_row["vaerdi"]
 
-    weather_codes = {
-        0: "Skyfrit", 1: "Næsten skyfrit", 2: "Delvist skyet", 3: "Skyet",
-        45: "Tåget", 48: "Rimtåge", 51: "Let støvregn", 53: "Støvregn",
-        55: "Tæt støvregn", 61: "Let regn", 63: "Regnvejr", 65: "Kraftig regn",
-        71: "Let snevejr", 73: "Snevejr", 75: "Tæt snevejr",
-        80: "Lettere regnbyger", 81: "Regnbyger", 82: "Kraftige regnbyger",
-        95: "Tordenvejr", 96: "Tordenvejr med hagl", 99: "Kraftigt tordenvejr med hagl"
-    }
+        if lat_row:
+            latitude = lat_row["vaerdi"]
 
-    weather_icons = {
-        0: "sun-fill", 1: "cloud-sun-fill", 2: "cloud-sun", 3: "cloud-fill",
-        45: "cloud-haze", 48: "cloud-haze2", 51: "cloud-drizzle", 53: "cloud-drizzle",
-        55: "cloud-drizzle-fill", 61: "cloud-rain", 63: "cloud-rain-fill", 65: "cloud-rain-heavy-fill",
-        71: "cloud-snow", 73: "cloud-snow-fill", 75: "snow", 80: "cloud-lightning-rain",
-        81: "cloud-lightning-rain-fill", 82: "cloud-rain-heavy", 95: "cloud-lightning-fill",
-        96: "cloud-hail", 99: "cloud-hail-fill"
-    }
+        if lon_row:
+            longitude = lon_row["vaerdi"]
 
-    try:
-        # URL'en er nu dynamisk og bruger de koordinater du vælger i admin-panelet!
-        weather_url = (
-            f"https://api.open-meteo.com/v1/forecast"
-            f"?latitude={latitude}"
-            f"&longitude={longitude}"
-            f"&current=temperature_2m,weather_code"
-            f"&timezone=Europe%2FCopenhagen"
+    except Exception as error:
+
+        print(
+            "Kunne ikke hente vejr-indstillinger:",
+            error
         )
 
-        response = requests.get(weather_url, timeout=10)
+    # --------------------------------------------------------
+    # Vejrkoder
+    # --------------------------------------------------------
+
+    weather_codes = {
+
+        0: "Skyfrit",
+        1: "Næsten skyfrit",
+        2: "Delvist skyet",
+        3: "Skyet",
+
+        45: "Tåget",
+        48: "Rimtåge",
+
+        51: "Let støvregn",
+        53: "Støvregn",
+        55: "Tæt støvregn",
+
+        61: "Let regn",
+        63: "Regnvejr",
+        65: "Kraftig regn",
+
+        71: "Let snevejr",
+        73: "Snevejr",
+        75: "Tæt snevejr",
+
+        80: "Lettere regnbyger",
+        81: "Regnbyger",
+        82: "Kraftige regnbyger",
+
+        95: "Tordenvejr",
+        96: "Tordenvejr med hagl",
+        99: "Kraftigt tordenvejr med hagl"
+    }
+
+    # --------------------------------------------------------
+    # Vejrikoner
+    # --------------------------------------------------------
+
+    weather_icons = {
+
+        0: "sun-fill",
+        1: "cloud-sun-fill",
+        2: "cloud-sun",
+        3: "cloud-fill",
+
+        45: "cloud-haze",
+        48: "cloud-haze2",
+
+        51: "cloud-drizzle",
+        53: "cloud-drizzle",
+        55: "cloud-drizzle-fill",
+
+        61: "cloud-rain",
+        63: "cloud-rain-fill",
+        65: "cloud-rain-heavy-fill",
+
+        71: "cloud-snow",
+        73: "cloud-snow-fill",
+        75: "snow",
+
+        80: "cloud-lightning-rain",
+        81: "cloud-lightning-rain-fill",
+        82: "cloud-rain-heavy",
+
+        95: "cloud-lightning-fill",
+        96: "cloud-hail",
+        99: "cloud-hail-fill"
+    }
+
+    # --------------------------------------------------------
+    # Hent vejret fra Open-Meteo
+    # --------------------------------------------------------
+
+    try:
+
+        weather_url = (
+            "https://api.open-meteo.com/v1/forecast"
+            f"?latitude={latitude}"
+            f"&longitude={longitude}"
+            "&current=temperature_2m,weather_code"
+            "&timezone=Europe%2FCopenhagen"
+        )
+
+        response = requests.get(
+            weather_url,
+            timeout=10
+        )
+
         response.raise_for_status()
+
         weather_data = response.json()
-        current = weather_data.get("current", {})
+
+        current = weather_data.get(
+            "current",
+            {}
+        )
 
         if current:
-            grader = round(current.get("temperature_2m", 0))
+
+            grader = round(
+                current.get(
+                    "temperature_2m",
+                    0
+                )
+            )
+
             temperatur = f"{grader}°C"
-            code = current.get("weather_code")
-            beskrivelse = weather_codes.get(code, "Skiftende vejr")
-            ikon = weather_icons.get(code, "cloud-sun")
 
-    except Exception as e:
-        print("Vejrfejl:", e)
+            code = current.get(
+                "weather_code"
+            )
 
-    return by, temperatur, beskrivelse, ikon
+            beskrivelse = weather_codes.get(
+                code,
+                "Skiftende vejr"
+            )
+
+            ikon = weather_icons.get(
+                code,
+                "cloud-sun"
+            )
+
+    except Exception as error:
+
+        print(
+            "Vejrfejl:",
+            error
+        )
+
+    return (
+        by,
+        temperatur,
+        beskrivelse,
+        ikon
+    )
 
 
 # ============================================================
@@ -304,8 +494,10 @@ def hent_dr_nyheder():
 
     now = time.time()
 
+    # --------------------------------------------------------
+    # Brug cache hvis den stadig er gyldig
+    # --------------------------------------------------------
 
-    # Brug cache
     if (
         now - news_cache["timestamp"]
         < NYHED_CACHE_SEKUNDER
@@ -313,14 +505,11 @@ def hent_dr_nyheder():
 
         return news_cache["data"]
 
-
     nyheder = []
-
 
     headers = {
         "User-Agent": "Infoscreen/1.0"
     }
-
 
     try:
 
@@ -332,11 +521,9 @@ def hent_dr_nyheder():
 
         response.raise_for_status()
 
-
         feed = feedparser.parse(
             response.content
         )
-
 
         for entry in feed.entries[:5]:
 
@@ -350,25 +537,21 @@ def hent_dr_nyheder():
                     f"++ DR NYHEDER: {titel} ++"
                 )
 
-
     except Exception as error:
 
         print(
             f"Kunne ikke hente DR RSS: {error}"
         )
 
-
-        # Brug gamle nyheder
+        # Brug gamle nyheder hvis vi har dem
         if news_cache["data"]:
 
             return news_cache["data"]
-
 
     news_cache = {
         "timestamp": now,
         "data": nyheder
     }
-
 
     return nyheder
 
@@ -384,18 +567,38 @@ def skaerm():
 
     try:
 
+        idag = datetime.now().strftime(
+            "%Y-%m-%d"
+        )
+
+        # ----------------------------------------------------
+        # VIGTIGT:
+        #
+        # Hent kun aktive medier som:
+        #
+        # - ikke har en udløbsdato
+        # ELLER
+        # - har en udløbsdato i dag eller fremover
+        #
+        # ----------------------------------------------------
+
         aktive_medier = conn.execute("""
             SELECT filnavn
             FROM medier
             WHERE aktiv = 1
+            AND (
+                udloebs_dato IS NULL
+                OR udloebs_dato = ''
+                OR udloebs_dato >= ?
+            )
             ORDER BY id ASC
-        """).fetchall()
-
+        """, (
+            idag,
+        )).fetchall()
 
         lokale_nyheder = hent_lokale_nyheder(
             conn
         )
-
 
         billed_sekunder = get_billed_sekunder(
             conn
@@ -404,15 +607,6 @@ def skaerm():
     finally:
 
         conn.close()
-
-
-    # VIGTIGT:
-    #
-    # Vi henter IKKE længere DR eller vejr her.
-    #
-    # Browseren henter det efter siden
-    # allerede er vist.
-
 
     return render_template(
         "skaerm.html",
@@ -433,86 +627,289 @@ def skaerm():
     )
 
 
-# ==========================================
-# RUTE 2: ADMIN PANEL (MED BY-STYRING)
-# ==========================================
+# ============================================================
+# ADMIN PANEL
+# ============================================================
 
-@app.route("/admin", methods=["GET", "POST"])
+@app.route(
+    "/admin",
+    methods=["GET", "POST"]
+)
 def admin():
+
     conn = get_db_connection()
 
-    # Liste over byer med koordinater, så du slipper for at taste tal ind manuelt
+    # --------------------------------------------------------
+    # Byer
+    # --------------------------------------------------------
+
     byer_koordinater = {
-        "Skovgaarde": {"lat": "56.50941163", "lon": "10.5417551"},
-        "Aarhus": {"lat": "56.1567", "lon": "10.2108"},
-        "Randers": {"lat": "56.4607", "lon": "10.0357"},
-        "Grenaa": {"lat": "56.4158", "lon": "10.8783"},
-        "Ebeltoft": {"lat": "56.1952", "lon": "10.6831"},
-        "København": {"lat": "55.6761", "lon": "12.5683"},
-        "Aalborg": {"lat": "57.0488", "lon": "9.9217"},
-        "Odense": {"lat": "55.4038", "lon": "10.4024"}
+
+        "Skovgaarde": {
+            "lat": "56.50941163",
+            "lon": "10.5417551"
+        },
+
+        "Aarhus": {
+            "lat": "56.1567",
+            "lon": "10.2108"
+        },
+
+        "Randers": {
+            "lat": "56.4607",
+            "lon": "10.0357"
+        },
+
+        "Grenaa": {
+            "lat": "56.4158",
+            "lon": "10.8783"
+        },
+
+        "Ebeltoft": {
+            "lat": "56.1952",
+            "lon": "10.6831"
+        },
+
+        "København": {
+            "lat": "55.6761",
+            "lon": "12.5683"
+        },
+
+        "Aalborg": {
+            "lat": "57.0488",
+            "lon": "9.9217"
+        },
+
+        "Odense": {
+            "lat": "55.4038",
+            "lon": "10.4024"
+        }
     }
 
+    # --------------------------------------------------------
+    # POST
+    # --------------------------------------------------------
+
     if request.method == "POST":
-        # 1. Ny ticker-tekst
+
+        # ====================================================
+        # 1. NY TICKER-TEKST
+        # ====================================================
+
         if "nyhed_tekst" in request.form:
-            tekst = request.form["nyhed_tekst"].strip()
+
+            tekst = request.form[
+                "nyhed_tekst"
+            ].strip()
+
             if tekst:
-                conn.execute("INSERT INTO ticker (tekst) VALUES (?)", (tekst,))
+
+                conn.execute("""
+                    INSERT INTO ticker (tekst)
+                    VALUES (?)
+                """, (
+                    tekst,
+                ))
+
                 conn.commit()
 
-        # 2. Upload medie
+        # ====================================================
+        # 2. UPLOAD MEDIE
+        # ====================================================
+
         elif "medie_fil" in request.files:
-            fil = request.files["medie_fil"]
+
+            fil = request.files[
+                "medie_fil"
+            ]
+
+            udloeb = request.form.get(
+                "udloeb_dato",
+                ""
+            ).strip()
+
             if fil and fil.filename:
+
                 filnavn = fil.filename
-                fil.save(os.path.join(app.config["UPLOAD_FOLDER"], filnavn))
-                conn.execute("INSERT INTO medier (filnavn, aktiv) VALUES (?, 1)", (filnavn,))
-                conn.commit()
 
-        # 3. Opdater billed-hastighed
+                if allowed_file(
+                    filnavn
+                ):
+
+                    fil.save(
+                        os.path.join(
+                            app.config[
+                                "UPLOAD_FOLDER"
+                            ],
+                            filnavn
+                        )
+                    )
+
+                    conn.execute("""
+                        INSERT INTO medier
+                        (
+                            filnavn,
+                            aktiv,
+                            udloebs_dato
+                        )
+                        VALUES (?, 1, ?)
+                    """, (
+                        filnavn,
+                        udloeb
+                    ))
+
+                    conn.commit()
+
+        # ====================================================
+        # 3. BILLEDHASTIGHED
+        # ====================================================
+
         elif "billed_sekunder" in request.form:
-            sekunder = request.form["billed_sekunder"].strip()
+
+            sekunder = request.form[
+                "billed_sekunder"
+            ].strip()
+
             if sekunder:
-                conn.execute('UPDATE indstillinger SET vaerdi = ? WHERE nogle = "billed_sekunder"', (sekunder,))
+
+                conn.execute("""
+                    UPDATE indstillinger
+                    SET vaerdi = ?
+                    WHERE nogle = "billed_sekunder"
+                """, (
+                    sekunder,
+                ))
+
                 conn.commit()
 
-        # 4. NYT: Opdater lokation for vejr ud fra rullemenuen
+        # ====================================================
+        # 4. VEJR BY
+        # ====================================================
+
         elif "valgt_by" in request.form:
-            by_navn = request.form["valgt_by"]
+
+            by_navn = request.form[
+                "valgt_by"
+            ]
+
             if by_navn in byer_koordinater:
-                # Tjek om rækkerne findes, ellers opret dem
-                conn.execute('INSERT OR IGNORE INTO indstillinger (nogle, vaerdi) VALUES ("vejr_by", "Skovgaarde")')
-                conn.execute('INSERT OR IGNORE INTO indstillinger (nogle, vaerdi) VALUES ("vejr_lat", "56.50941163")')
-                conn.execute('INSERT OR IGNORE INTO indstillinger (nogle, vaerdi) VALUES ("vejr_lon", "10.5417551")')
-                
-                # Gem de nye værdier
-                conn.execute('UPDATE indstillinger SET vaerdi = ? WHERE nogle = "vejr_by"', (by_navn,))
-                conn.execute('UPDATE indstillinger SET vaerdi = ? WHERE nogle = "vejr_lat"', (byer_koordinater[by_navn]["lat"],))
-                conn.execute('UPDATE indstillinger SET vaerdi = ? WHERE nogle = "vejr_lon"', (byer_koordinater[by_navn]["lon"],))
+
+                # Sørg for at vejr-indstillingerne findes
+
+                conn.execute("""
+                    INSERT OR IGNORE INTO indstillinger
+                    (nogle, vaerdi)
+                    VALUES ("vejr_by", "Skovgaarde")
+                """)
+
+                conn.execute("""
+                    INSERT OR IGNORE INTO indstillinger
+                    (nogle, vaerdi)
+                    VALUES ("vejr_lat", "56.50941163")
+                """)
+
+                conn.execute("""
+                    INSERT OR IGNORE INTO indstillinger
+                    (nogle, vaerdi)
+                    VALUES ("vejr_lon", "10.5417551")
+                """)
+
+                # Gem ny by
+
+                conn.execute("""
+                    UPDATE indstillinger
+                    SET vaerdi = ?
+                    WHERE nogle = "vejr_by"
+                """, (
+                    by_navn,
+                ))
+
+                # Gem latitude
+
+                conn.execute("""
+                    UPDATE indstillinger
+                    SET vaerdi = ?
+                    WHERE nogle = "vejr_lat"
+                """, (
+                    byer_koordinater[
+                        by_navn
+                    ]["lat"],
+                ))
+
+                # Gem longitude
+
+                conn.execute("""
+                    UPDATE indstillinger
+                    SET vaerdi = ?
+                    WHERE nogle = "vejr_lon"
+                """, (
+                    byer_koordinater[
+                        by_navn
+                    ]["lon"],
+                ))
+
                 conn.commit()
 
-        return redirect(url_for("admin"))
+        return redirect(
+            url_for("admin")
+        )
 
-    alle_medier = conn.execute("SELECT * FROM medier ORDER BY id ASC").fetchall()
-    alle_nyheder = conn.execute("SELECT * FROM ticker ORDER BY id ASC").fetchall()
-    
-    hastighed_row = conn.execute('SELECT vaerdi FROM indstillinger WHERE nogle = "billed_sekunder"').fetchone()
-    billed_sekunder = hastighed_row['vaerdi'] if hastighed_row else "12"
+    # ========================================================
+    # DATA TIL ADMIN
+    # ========================================================
 
-    # Hent den nuværende valgte by til admin-panelet
-    by_row = conn.execute('SELECT vaerdi FROM indstillinger WHERE nogle = "vejr_by"').fetchone()
-    nuvaerende_by = by_row['vaerdi'] if by_row else "Skovgaarde"
+    alle_medier = conn.execute("""
+        SELECT *
+        FROM medier
+        ORDER BY id ASC
+    """).fetchall()
+
+    alle_nyheder = conn.execute("""
+        SELECT *
+        FROM ticker
+        ORDER BY id ASC
+    """).fetchall()
+
+    hastighed_row = conn.execute("""
+        SELECT vaerdi
+        FROM indstillinger
+        WHERE nogle = "billed_sekunder"
+    """).fetchone()
+
+    billed_sekunder = (
+        hastighed_row["vaerdi"]
+        if hastighed_row
+        else "12"
+    )
+
+    by_row = conn.execute("""
+        SELECT vaerdi
+        FROM indstillinger
+        WHERE nogle = "vejr_by"
+    """).fetchone()
+
+    nuvaerende_by = (
+        by_row["vaerdi"]
+        if by_row
+        else "Skovgaarde"
+    )
 
     conn.close()
 
     return render_template(
         "admin.html",
+
         medier=alle_medier,
+
         nyheder=alle_nyheder,
+
         nuvaerende_sekunder=billed_sekunder,
+
         nuvaerende_by=nuvaerende_by,
-        byer=list(byer_koordinater.keys()) # Sender by-listen med til HTML'en
+
+        byer=list(
+            byer_koordinater.keys()
+        )
     )
 
 
@@ -530,7 +927,6 @@ def skift_status(id):
         silent=True
     )
 
-
     if not data:
 
         return jsonify(
@@ -538,13 +934,11 @@ def skift_status(id):
             error="Ingen data modtaget"
         ), 400
 
-
     ny_status = (
         1
         if data.get("aktiv")
         else 0
     )
-
 
     conn = get_db_connection()
 
@@ -559,9 +953,7 @@ def skift_status(id):
             id
         ))
 
-
         conn.commit()
-
 
         if cursor.rowcount == 0:
 
@@ -570,11 +962,9 @@ def skift_status(id):
                 error="Medie ikke fundet"
             ), 404
 
-
     finally:
 
         conn.close()
-
 
     return jsonify(
         success=True
@@ -602,7 +992,6 @@ def slet(id):
             id,
         )).fetchone()
 
-
         if medie:
 
             filsti = os.path.join(
@@ -611,7 +1000,6 @@ def slet(id):
                 ],
                 medie["filnavn"]
             )
-
 
             try:
 
@@ -623,7 +1011,6 @@ def slet(id):
 
                 pass
 
-
             conn.execute("""
                 DELETE FROM medier
                 WHERE id = ?
@@ -631,14 +1018,11 @@ def slet(id):
                 id,
             ))
 
-
             conn.commit()
-
 
     finally:
 
         conn.close()
-
 
     return redirect(
         url_for("admin")
@@ -671,7 +1055,6 @@ def slet_nyhed(id):
 
         conn.close()
 
-
     return redirect(
         url_for("admin")
     )
@@ -698,12 +1081,9 @@ def hent_nyheder():
 
         conn.close()
 
-
-    # DR hentes fra cache
     nyheder.extend(
         hent_dr_nyheder()
     )
-
 
     return jsonify(
         nyheder=nyheder
@@ -719,17 +1099,35 @@ def hent_nyheder():
 )
 def hent_aktive_medier():
 
+    idag = datetime.now().strftime(
+        "%Y-%m-%d"
+    )
+
     conn = get_db_connection()
 
     try:
+
+        # ----------------------------------------------------
+        # VIGTIGT:
+        #
+        # Her filtreres udløbne medier også fra.
+        #
+        # Det var denne del der manglede tidligere.
+        # ----------------------------------------------------
 
         medier = conn.execute("""
             SELECT filnavn
             FROM medier
             WHERE aktiv = 1
+            AND (
+                udloebs_dato IS NULL
+                OR udloebs_dato = ''
+                OR udloebs_dato >= ?
+            )
             ORDER BY id ASC
-        """).fetchall()
-
+        """, (
+            idag,
+        )).fetchall()
 
         sekunder = get_billed_sekunder(
             conn
@@ -738,7 +1136,6 @@ def hent_aktive_medier():
     finally:
 
         conn.close()
-
 
     return jsonify(
 
@@ -766,7 +1163,6 @@ def hent_vejr_api():
         beskrivelse,
         ikon
     ) = hent_vejr()
-
 
     return jsonify(
 

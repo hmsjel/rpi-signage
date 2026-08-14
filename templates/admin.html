@@ -8,17 +8,67 @@
         .flex-container { display: flex; gap: 20px; flex-wrap: wrap; }
         .Kasse { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); flex: 1; min-width: 250px; margin-bottom: 30px; }
         label { display: block; margin-top: 15px; font-weight: bold; }
-        input[type="text"], input[type="file"], input[type="number"], select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; background: white; }
+        /* RETTET: Tilføjet input[type="date"] så datofeltet styles flot ligesom de andre */
+        input[type="text"], input[type="file"], input[type="number"], input[type="date"], select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; background: white; }
         button { background: #007bff; color: white; border: none; padding: 12px 20px; margin-top: 20px; cursor: pointer; border-radius: 4px; font-size: 16px; width: 100%; }
         button:hover { background: #0056b3; }
         .nyhed-knap { background: #28a745; }
         .indstil-knap { background: #6c757d; }
         .vejr-knap { background: #17a2b8; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 30px; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #222; color: white; }
         .slet-knap { color: #dc3545; text-decoration: none; font-weight: bold; }
         .status-checkbox { transform: scale(1.5); cursor: pointer; }
+
+        /* Det kompakte galleri-netværk (Grid) */
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+            margin-bottom: 40px;
+        }
+
+        /* De enkelte mediekort */
+        .media-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            border: 1px solid #eee;
+        }
+
+        /* Preview-billederne og videoerne indeni kortet */
+        .media-card-preview {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 6px;
+            background: #000;
+            margin-bottom: 12px;
+        }
+
+        /* Det pæne, afkortede filnavn */
+        .media-card-title {
+            font-size: 13px;
+            font-weight: 500;
+            word-break: break-all;
+            margin-bottom: 5px; /* Skruet lidt ned for at give plads til datoen */
+            color: #444;
+            min-height: 32px;
+        }
+
+        /* Kontrolpanelet i bunden af kortet (Vis og Slet tæt sammen) */
+        .media-card-controls {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #eee;
+            padding-top: 12px;
+        }
     </style>
 </head>
 <body>
@@ -32,6 +82,11 @@
             <form action="/admin" method="POST" enctype="multipart/form-data">
                 <label>Vælg Billede eller Video:</label>
                 <input type="file" name="medie_fil" accept="image/*,video/*" required>
+                
+                <!-- NYT: Felt til at vælge en valgfri udløbsdato -->
+                <label>Udløbsdato (Valgfri - lad stå tom for altid aktiv):</label>
+                <input type="date" name="udloeb_dato">
+                
                 <button type="submit">Upload og aktiver</button>
             </form>
         </div>
@@ -56,7 +111,7 @@
             </form>
         </div>
 
-        <!-- NY BOKS 4: Vejr-lokation -->
+        <!-- Boks 4: Vejr-lokation -->
         <div class="Kasse">
             <h2>Vejr-lokation</h2>
             <form action="/admin" method="POST">
@@ -83,30 +138,40 @@
     </table>
 
     <h2>Nuværende Medier (Afkryds for at vise på infoskærm)</h2>
-    <table>
-        <tr>
-            <th style="width: 80px; text-align: center;">Vis på skærm?</th>
-            <th style="width: 120px;">Preview</th>
-            <th>Filnavn</th>
-            <th style="width: 100px;">Handling</th>
-        </tr>
+    
+    <div class="media-grid">
         {% for medie in medier %}
-        <tr>
-            <td style="text-align: center;">
-                <input type="checkbox" class="status-checkbox" data-id="{{ medie.id }}" {% if medie.aktiv == 1 %}checked{% endif %} onchange="opdaterStatus(this)">
-            </td>
-            <td>
-                {% if medie.filnavn.endswith('.mp4') or medie.filnavn.endswith('.webm') %}
-                    <video src="/uploads/{{ medie.filnavn }}" style="width: 100px; height: 60px; object-fit: cover; border-radius: 4px; background: #000;" muted controls></video>
+        <div class="media-card">
+            <!-- Preview-billede eller video -->
+            {% if medie.filnavn.endswith('.mp4') or medie.filnavn.endswith('.webm') %}
+                <video src="/uploads/{{ medie.filnavn }}" class="media-card-preview" muted controls></video>
+            {% else %}
+                <img src="/uploads/{{ medie.filnavn }}" alt="Preview" class="media-card-preview">
+            {% endif %}
+            
+            <!-- Filnavn -->
+            <div class="media-card-title">{{ medie.filnavn }}</div>
+            
+            <!-- NYT: Viser datoen på kortet, hvis du har tastet en ind ved upload -->
+            <div style="font-size: 11px; color: #777; margin-bottom: 12px; font-weight: bold;">
+                {% if medie.udloebs_dato %}
+                    Udløber: {{ medie.udloebs_dato }}
                 {% else %}
-                    <img src="/uploads/{{ medie.filnavn }}" alt="Preview" style="width: 100px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;">
+                    Udløber aldrig
                 {% endif %}
-            </td>
-            <td style="vertical-align: middle; font-weight: 500;">{{ medie.filnavn }}</td>
-            <td style="vertical-align: middle;"><a href="/slet/{{ medie.id }}" class="slet-knap" onclick="return confirm('Vil du slette filen helt?')">Slet</a></td>
-        </tr>
+            </div>
+            
+            <!-- Kontrolelementer -->
+            <div class="media-card-controls">
+                <label style="margin: 0; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" class="status-checkbox" data-id="{{ medie.id }}" {% if medie.aktiv == 1 %}checked{% endif %} onchange="opdaterStatus(this)">
+                    Vis på skærm
+                </label>
+                <a href="/slet/{{ medie.id }}" class="slet-knap" onclick="return confirm('Vil du slette filen helt?')">Slet</a>
+            </div>
+        </div>
         {% endfor %}
-    </table>
+    </div>
 
     <script>
         async function opdaterStatus(checkbox) {
