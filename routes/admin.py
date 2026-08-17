@@ -1,6 +1,6 @@
 import os
 import shutil
-from datetime import datetime
+from datetime import datetime, date
 
 from flask import (
     Blueprint,
@@ -45,6 +45,26 @@ admin_bp = Blueprint(
 )
 
 
+def opdater_udloebne_medier(conn):
+    """
+    Sætter automatisk aktiv = 0 for medier,
+    hvor udløbsdatoen er overskredet.
+
+    Et medie med udløbsdato i dag er stadig aktivt.
+    """
+    i_dag = date.today().isoformat()
+
+    conn.execute("""
+        UPDATE medier
+        SET aktiv = 0
+        WHERE udloebs_dato IS NOT NULL
+        AND udloebs_dato != ''
+        AND udloebs_dato < ?
+    """, (i_dag,))
+
+    conn.commit()
+
+
 @admin_bp.route("/admin", methods=["GET", "POST"])
 def admin():
 
@@ -65,6 +85,9 @@ def admin():
     conn = get_db_connection()
 
     try:
+
+        # Deaktiver automatisk medier, hvis udløbsdatoen er overskredet.
+        opdater_udloebne_medier(conn)
 
         if request.method == "POST":
 
@@ -101,11 +124,6 @@ def admin():
                     ""
                 ).strip()
 
-                start = request.form.get(
-                    "start_dato",
-                    ""
-                ).strip()
-
                 udloeb = request.form.get(
                     "udloeb_dato",
                     ""
@@ -132,6 +150,14 @@ def admin():
                         )
                     )
 
+                    # Et nyt medie er aktivt, medmindre
+                    # udløbsdatoen allerede er overskredet.
+                    aktiv = 1
+
+                    if udloeb:
+                        if udloeb < date.today().isoformat():
+                            aktiv = 0
+
                     conn.execute("""
                         INSERT INTO medier (
                             filnavn,
@@ -139,13 +165,12 @@ def admin():
                             start_dato,
                             udloebs_dato
                         )
-                        VALUES (
-                            ?, 1, ?
-                        )
+                        VALUES (?, ?, ?, ?)
                     """, (
                         filnavn,
-                        start,
-                        udloeb
+                        aktiv,
+                        start or None,
+                        udloeb or None
                     ))
 
                     conn.commit()
@@ -486,17 +511,41 @@ def aendre_datoer(id):
 
     try:
 
-        conn.execute("""
-            UPDATE medier
-            SET
-                start_dato = ?,
-                udloebs_dato = ?
-            WHERE id = ?
-        """, (
-            start_dato or None,
-            udloebs_dato or None,
-            id,
-        ))
+        if udloebs_dato:
+
+            i_dag = date.today().isoformat()
+
+            if udloebs_dato < i_dag:
+                aktiv = 0
+            else:
+                aktiv = 1
+
+            conn.execute("""
+                UPDATE medier
+                SET
+                    start_dato = ?,
+                    udloebs_dato = ?,
+                    aktiv = ?
+                WHERE id = ?
+            """, (
+                start_dato or None,
+                udloebs_dato,
+                aktiv,
+                id
+            ))
+
+        else:
+
+            conn.execute("""
+                UPDATE medier
+                SET
+                    start_dato = ?,
+                    udloebs_dato = NULL
+                WHERE id = ?
+            """, (
+                start_dato or None,
+                id
+            ))
 
         conn.commit()
 
@@ -506,6 +555,7 @@ def aendre_datoer(id):
     return redirect(
         url_for("admin.admin")
     )
+
 
 @admin_bp.route(
     "/aendre-udloeb/<int:id>",
