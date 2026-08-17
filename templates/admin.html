@@ -5,7 +5,10 @@
 
     <meta charset="UTF-8">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Signage Admin Panel</title>
 
@@ -18,6 +21,7 @@
 
 
         body {
+
             margin: 0;
             padding: 22px;
 
@@ -28,7 +32,9 @@
         }
 
 
-        /* TOPBAR */
+        /* ====================================================
+           TOPBAR
+           ==================================================== */
 
         .topbar {
 
@@ -63,7 +69,9 @@
         }
 
 
-        /* SETTINGS */
+        /* ====================================================
+           SETTINGS
+           ==================================================== */
 
         .settings-grid {
 
@@ -180,7 +188,9 @@
         }
 
 
-        /* STORAGE */
+        /* ====================================================
+           STORAGE
+           ==================================================== */
 
         .storage {
 
@@ -230,7 +240,9 @@
         }
 
 
-        /* CONTENT */
+        /* ====================================================
+           CONTENT
+           ==================================================== */
 
         .content-grid {
 
@@ -282,7 +294,9 @@
         }
 
 
-        /* DELETE */
+        /* ====================================================
+           DELETE
+           ==================================================== */
 
         .delete {
 
@@ -294,7 +308,9 @@
         }
 
 
-        /* PREVIEW */
+        /* ====================================================
+           PREVIEW
+           ==================================================== */
 
         .preview {
 
@@ -310,25 +326,62 @@
         }
 
 
-        /* STATUS */
+        /* ====================================================
+           STATUS
+           ==================================================== */
 
-        .active {
+        .status {
 
-            color: #198754;
+            display: inline-block;
+
+            padding:
+                4px 8px;
+
+            border-radius: 5px;
+
+            font-size: 12px;
 
             font-weight: bold;
+
+            white-space: nowrap;
         }
 
 
-        .inactive {
+        .status-active {
 
-            color: #6c757d;
+            color: #146c43;
 
-            font-weight: bold;
+            background: #d1e7dd;
         }
 
 
-        /* EXPIRY */
+        .status-inactive {
+
+            color: #495057;
+
+            background: #e9ecef;
+        }
+
+
+        .status-expired {
+
+            color: #842029;
+
+            background: #f8d7da;
+        }
+
+
+        .status-future {
+
+            color: #664d03;
+
+            background: #fff3cd;
+        }
+
+
+        /* ====================================================
+           EXPIRY
+           ==================================================== */
 
         .expiry {
 
@@ -336,7 +389,25 @@
         }
 
 
-        /* DATE FORM */
+        .expiry-expired {
+
+            color: #dc3545;
+
+            font-weight: bold;
+        }
+
+
+        .expiry-today {
+
+            color: #fd7e14;
+
+            font-weight: bold;
+        }
+
+
+        /* ====================================================
+           DATE FORM
+           ==================================================== */
 
         .date-form {
 
@@ -365,7 +436,9 @@
         }
 
 
-        /* SWITCH */
+        /* ====================================================
+           SWITCH
+           ==================================================== */
 
         .switch {
 
@@ -376,7 +449,17 @@
         }
 
 
-        /* HINT */
+        .switch:disabled {
+
+            cursor: not-allowed;
+
+            opacity: .45;
+        }
+
+
+        /* ====================================================
+           HINT
+           ==================================================== */
 
         .hint {
 
@@ -388,7 +471,9 @@
         }
 
 
-        /* ACTION BUTTON */
+        /* ====================================================
+           ACTION BUTTON
+           ==================================================== */
 
         .save-button {
 
@@ -403,7 +488,9 @@
         }
 
 
-        /* MOBILE */
+        /* ====================================================
+           MOBILE
+           ==================================================== */
 
         @media (max-width: 1200px) {
 
@@ -447,7 +534,9 @@
 <body>
 
 
-<!-- TOPBAR -->
+<!-- ========================================================
+     TOPBAR
+     ========================================================= -->
 
 <div class="topbar">
 
@@ -467,12 +556,16 @@
 
 
 
-<!-- SETTINGS -->
+<!-- ========================================================
+     SETTINGS
+     ========================================================= -->
 
 <div class="settings-grid">
 
 
-    <!-- UPLOAD -->
+    <!-- ====================================================
+         UPLOAD
+         ==================================================== -->
 
     <div class="card">
 
@@ -535,7 +628,9 @@
 
 
 
-    <!-- LOKAL NYHED -->
+    <!-- ====================================================
+         LOKAL NYHED
+         ==================================================== -->
 
     <div class="card">
 
@@ -575,7 +670,9 @@
 
 
 
-    <!-- SLIDESHOW -->
+    <!-- ====================================================
+         SLIDESHOW
+         ==================================================== -->
 
     <div class="card">
 
@@ -617,7 +714,9 @@
 
 
 
-    <!-- TICKER -->
+    <!-- ====================================================
+         TICKER
+         ==================================================== -->
 
     <div class="card">
 
@@ -659,7 +758,9 @@
 
 
 
-    <!-- VEJR -->
+    <!-- ====================================================
+         VEJR
+         ==================================================== -->
 
     <div class="card">
 
@@ -711,7 +812,9 @@
 
 
 
-    <!-- DR NYHEDER -->
+    <!-- ====================================================
+         DR NYHEDER
+         ==================================================== -->
 
     <div class="card">
 
@@ -779,7 +882,9 @@
 
 
 
-<!-- LAGERPLADS -->
+<!-- ========================================================
+     LAGERPLADS
+     ========================================================= -->
 
 <div class="card storage">
 
@@ -819,12 +924,16 @@
 
 
 
-<!-- CONTENT -->
+<!-- ========================================================
+     CONTENT
+     ========================================================= -->
 
 <div class="content-grid">
 
 
-    <!-- LOKALE NYHEDER -->
+    <!-- ====================================================
+         LOKALE NYHEDER
+         ==================================================== -->
 
     <div class="card">
 
@@ -903,7 +1012,9 @@
 
 
 
-    <!-- MEDIER -->
+    <!-- ====================================================
+         MEDIER
+         ==================================================== -->
 
     <div class="card">
 
@@ -962,170 +1073,220 @@
 
                 {% for medie in medier %}
 
-                <tr>
+                    {% set startdato = medie.start_dato or '' %}
+                    {% set udloebsdato = medie.udloebs_dato or '' %}
+
+                    {% set udloebet = (
+                        udloebsdato
+                        and udloebsdato < current_date
+                    ) %}
+
+                    {% set starter_senere = (
+                        startdato
+                        and startdato > current_date
+                    ) %}
+
+                    <tr>
 
 
-                    <!-- PREVIEW -->
+                        <!-- PREVIEW -->
 
-                    <td>
+                        <td>
 
-                        {% if medie.filnavn.lower().endswith(('.mp4', '.webm', '.mov')) %}
+                            {% if medie.filnavn.lower().endswith(
+                                ('.mp4', '.webm', '.mov')
+                            ) %}
 
-                            <video
-                                src="{{ url_for('admin.uploaded_file', filename=medie.filnavn) }}"
-                                class="preview"
-                                muted
-                                autoplay
-                                loop
-                                playsinline
-                            ></video>
+                                <video
+                                    src="{{ url_for(
+                                        'admin.uploaded_file',
+                                        filename=medie.filnavn
+                                    ) }}"
+                                    class="preview"
+                                    muted
+                                    autoplay
+                                    loop
+                                    playsinline
+                                ></video>
 
-                        {% else %}
+                            {% else %}
 
-                            <img
-                                src="{{ url_for('admin.uploaded_file', filename=medie.filnavn) }}"
-                                class="preview"
-                                alt="{{ medie.filnavn }}"
-                            >
+                                <img
+                                    src="{{ url_for(
+                                        'admin.uploaded_file',
+                                        filename=medie.filnavn
+                                    ) }}"
+                                    class="preview"
+                                    alt="{{ medie.filnavn }}"
+                                >
 
-                        {% endif %}
-
-                    </td>
-
-
-
-                    <!-- FILNAVN -->
-
-                    <td>
-
-                        {{ medie.filnavn }}
-
-                    </td>
-
-
-
-                    <!-- STATUS -->
-
-                    <td>
-
-                        {% if medie.aktiv == 1 %}
-
-                            <span class="active">
-                                Aktiv
-                            </span>
-
-                        {% else %}
-
-                            <span class="inactive">
-                                Inaktiv
-                            </span>
-
-                        {% endif %}
-
-                    </td>
-
-
-
-                    <!-- STARTDATO -->
-
-                    <td>
-
-                        <input
-                            type="date"
-                            name="start_dato"
-                            value="{{ medie.start_dato or '' }}"
-                            form="dateform{{ medie.id }}"
-                        >
-
-                    </td>
-
-
-
-                    <!-- UDLØBSDATO -->
-
-                    <td>
-
-                        <input
-                            type="date"
-                            name="udloebs_dato"
-                            value="{{ medie.udloebs_dato or '' }}"
-                            form="dateform{{ medie.id }}"
-                        >
-
-                    </td>
-
-
-
-                    <!-- GEM DATOER -->
-
-                    <td>
-
-                        <form
-                            id="dateform{{ medie.id }}"
-                            action="{{ url_for('admin.aendre_datoer', id=medie.id) }}"
-                            method="POST"
-                        >
-
-                            <button
-                                type="submit"
-                                class="save-button"
-                            >
-                                Gem
-                            </button>
-
-                        </form>
-
-                    </td>
-
-
-
-                    <!-- AKTIV / INAKTIV -->
-
-                    <td>
-
-                        <input
-                            class="switch"
-                            type="checkbox"
-                            data-id="{{ medie.id }}"
-                            {% if medie.aktiv == 1 %}
-                                checked
                             {% endif %}
-                            onchange="opdaterStatus(this)"
-                        >
 
-                    </td>
+                        </td>
 
 
 
-                    <!-- SLET -->
+                        <!-- FILNAVN -->
 
-                    <td>
+                        <td>
 
-                        <a
-                            class="delete"
-                            href="{{ url_for('admin.slet', id=medie.id) }}"
-                            onclick="return confirm('Vil du slette filen {{ medie.filnavn }}?')"
-                        >
-                            Slet
-                        </a>
+                            {{ medie.filnavn }}
 
-                    </td>
+                        </td>
 
 
-                </tr>
+
+                        <!-- STATUS -->
+
+                        <td>
+
+                            {% if udloebet %}
+
+                                <span class="status status-expired">
+                                    Udløbet
+                                </span>
+
+                            {% elif starter_senere %}
+
+                                <span class="status status-future">
+                                    Starter senere
+                                </span>
+
+                            {% elif medie.aktiv == 1 %}
+
+                                <span class="status status-active">
+                                    Aktiv
+                                </span>
+
+                            {% else %}
+
+                                <span class="status status-inactive">
+                                    Inaktiv
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+
+                        <!-- STARTDATO -->
+
+                        <td>
+
+                            <input
+                                type="date"
+                                name="start_dato"
+                                value="{{ startdato }}"
+                                form="dateform{{ medie.id }}"
+                            >
+
+                        </td>
+
+
+
+                        <!-- UDLØBSDATO -->
+
+                        <td>
+
+                            <input
+                                type="date"
+                                name="udloebs_dato"
+                                value="{{ udloebsdato }}"
+                                form="dateform{{ medie.id }}"
+                            >
+
+                        </td>
+
+
+
+                        <!-- GEM DATOER -->
+
+                        <td>
+
+                            <form
+                                id="dateform{{ medie.id }}"
+                                action="{{ url_for(
+                                    'admin.aendre_datoer',
+                                    id=medie.id
+                                ) }}"
+                                method="POST"
+                            >
+
+                                <button
+                                    type="submit"
+                                    class="save-button"
+                                >
+                                    Gem
+                                </button>
+
+                            </form>
+
+                        </td>
+
+
+
+                        <!-- AKTIV / INAKTIV -->
+
+                        <td>
+
+                            <input
+                                class="switch"
+                                type="checkbox"
+                                data-id="{{ medie.id }}"
+
+                                {% if medie.aktiv == 1 %}
+                                    checked
+                                {% endif %}
+
+                                {% if udloebet %}
+                                    disabled
+                                    title="Mediet er udløbet"
+                                {% elif starter_senere %}
+                                    title="Mediet starter {{ startdato }}"
+                                {% endif %}
+
+                                onchange="opdaterStatus(this)"
+                            >
+
+                        </td>
+
+
+
+                        <!-- SLET -->
+
+                        <td>
+
+                            <a
+                                class="delete"
+                                href="{{ url_for(
+                                    'admin.slet',
+                                    id=medie.id
+                                ) }}"
+                                onclick="return confirm(
+                                    'Vil du slette filen {{ medie.filnavn }}?'
+                                )"
+                            >
+                                Slet
+                            </a>
+
+                        </td>
+
+
+                    </tr>
 
 
                 {% else %}
 
-                <tr>
+                    <tr>
 
-                    <td colspan="8">
+                        <td colspan="8">
 
-                        Ingen medier uploadet.
+                            Ingen medier uploadet.
 
-                    </td>
+                        </td>
 
-                </tr>
+                    </tr>
 
                 {% endfor %}
 
@@ -1143,13 +1304,22 @@
 
 
 
-<!-- STATUS JAVASCRIPT -->
+<!-- ========================================================
+     STATUS JAVASCRIPT
+     ========================================================= -->
 
 <script>
 
 async function opdaterStatus(checkbox) {
 
     const id = checkbox.dataset.id;
+
+
+    if (checkbox.disabled) {
+
+        return;
+
+    }
 
 
     try {
@@ -1170,9 +1340,14 @@ async function opdaterStatus(checkbox) {
         );
 
 
+        const data =
+            await response.json();
+
+
         if (!response.ok) {
 
             throw new Error(
+                data.error ||
                 "Kunne ikke ændre status"
             );
 
@@ -1192,6 +1367,7 @@ async function opdaterStatus(checkbox) {
 
 
         alert(
+            error.message ||
             "Kunne ikke ændre mediestatus."
         );
 

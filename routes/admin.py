@@ -1,5 +1,7 @@
 import os
 import shutil
+import uuid
+
 from datetime import datetime, date
 
 from flask import (
@@ -13,6 +15,8 @@ from flask import (
     current_app,
     send_from_directory,
 )
+
+from werkzeug.utils import secure_filename
 
 from database.db import get_db_connection
 
@@ -39,86 +43,146 @@ from config import (
     BASE_DIR,
 )
 
+
 admin_bp = Blueprint(
     "admin",
     __name__,
 )
 
 
+# ============================================================
+# AUTOMATISK UDLØB
+# ============================================================
+
 def opdater_udloebne_medier(conn):
     """
-    Sætter automatisk aktiv = 0 for medier,
-    hvor udløbsdatoen er overskredet.
+    Deaktiverer automatisk medier, hvor udløbsdatoen
+    er overskredet.
 
     Et medie med udløbsdato i dag er stadig aktivt.
     """
+
     i_dag = date.today().isoformat()
 
-    conn.execute("""
+    conn.execute(
+        """
         UPDATE medier
         SET aktiv = 0
         WHERE udloebs_dato IS NOT NULL
         AND udloebs_dato != ''
         AND udloebs_dato < ?
-    """, (i_dag,))
+        """,
+        (i_dag,)
+    )
 
     conn.commit()
 
 
-@admin_bp.route("/admin", methods=["GET", "POST"])
+# ============================================================
+# ADMIN
+# ============================================================
+
+@admin_bp.route(
+    "/admin",
+    methods=["GET", "POST"]
+)
 def admin():
 
     if not session.get("logget_ind"):
-        return redirect(url_for("auth.login"))
+        return redirect(
+            url_for("auth.login")
+        )
+
+    # --------------------------------------------------------
+    # VEJRBYER
+    # --------------------------------------------------------
 
     byer_koordinater = {
-        "Skovgaarde": {"lat": "56.50941163", "lon": "10.5417551"},
-        "Aarhus": {"lat": "56.1567", "lon": "10.2108"},
-        "Randers": {"lat": "56.4607", "lon": "10.0357"},
-        "Grenaa": {"lat": "56.4158", "lon": "10.8783"},
-        "Ebeltoft": {"lat": "56.1952", "lon": "10.6831"},
-        "København": {"lat": "55.6761", "lon": "12.5683"},
-        "Aalborg": {"lat": "57.0488", "lon": "9.9217"},
-        "Odense": {"lat": "55.4038", "lon": "10.4024"},
+        "Skovgaarde": {
+            "lat": "56.50941163",
+            "lon": "10.5417551"
+        },
+        "Aarhus": {
+            "lat": "56.1567",
+            "lon": "10.2108"
+        },
+        "Randers": {
+            "lat": "56.4607",
+            "lon": "10.0357"
+        },
+        "Grenaa": {
+            "lat": "56.4158",
+            "lon": "10.8783"
+        },
+        "Ebeltoft": {
+            "lat": "56.1952",
+            "lon": "10.6831"
+        },
+        "København": {
+            "lat": "55.6761",
+            "lon": "12.5683"
+        },
+        "Aalborg": {
+            "lat": "57.0488",
+            "lon": "9.9217"
+        },
+        "Odense": {
+            "lat": "55.4038",
+            "lon": "10.4024"
+        },
     }
 
     conn = get_db_connection()
 
     try:
 
-        # Deaktiver automatisk medier, hvis udløbsdatoen er overskredet.
+        # ----------------------------------------------------
+        # AUTOMATISK DEAKTIVERING AF UDLØBNE MEDIER
+        # ----------------------------------------------------
+
         opdater_udloebne_medier(conn)
+
+        # ====================================================
+        # POST
+        # ====================================================
 
         if request.method == "POST":
 
-            # -----------------------------------
-            # NYHED
-            # -----------------------------------
+            # ------------------------------------------------
+            # NY LOKAL NYHED
+            # ------------------------------------------------
 
             if "nyhed_tekst" in request.form:
 
-                tekst = request.form[
-                    "nyhed_tekst"
-                ].strip()
+                tekst = request.form.get(
+                    "nyhed_tekst",
+                    ""
+                ).strip()
 
                 if tekst:
 
-                    conn.execute("""
+                    conn.execute(
+                        """
                         INSERT INTO ticker (
                             tekst
                         )
                         VALUES (?)
-                    """, (tekst,))
+                        """,
+                        (tekst,)
+                    )
 
                     conn.commit()
 
-            # -----------------------------------
-            # UPLOAD
-            # -----------------------------------
+            # ------------------------------------------------
+            # UPLOAD MEDIE
+            # ------------------------------------------------
 
             elif "medie_fil" in request.files:
 
-                fil = request.files["medie_fil"]
+                fil = request.files[
+                    "medie_fil"
+                ]
+
                 start = request.form.get(
                     "start_dato",
                     ""
@@ -128,7 +192,11 @@ def admin():
                     "udloeb_dato",
                     ""
                 ).strip()
-                
+
+                # --------------------------------------------
+                # Kontroller fil
+                # --------------------------------------------
+
                 if (
                     fil
                     and fil.filename
@@ -137,28 +205,88 @@ def admin():
                     )
                 ):
 
-                    filnavn = os.path.basename(
-                        fil.filename
-                    )
+                    # ----------------------------------------
+                    # SIKKERT FILNAVN
+                    # ----------------------------------------
 
-                    fil.save(
-                        os.path.join(
-                            current_app.config[
-                                "UPLOAD_FOLDER"
-                            ],
-                            filnavn
+                    original_filnavn = (
+                        secure_filename(
+                            fil.filename
                         )
                     )
 
-                    # Et nyt medie er aktivt, medmindre
-                    # udløbsdatoen allerede er overskredet.
+                    if not original_filnavn:
+                        return redirect(
+                            url_for(
+                                "admin.admin"
+                            )
+                        )
+
+                    # ----------------------------------------
+                    # Lav unikt filnavn
+                    #
+                    # Eksempel:
+                    # billede.jpg
+                    #
+                    # bliver til:
+                    # billede_a8f31c.jpg
+                    # ----------------------------------------
+
+                    filnavn, filendelse = os.path.splitext(
+                        original_filnavn
+                    )
+
+                    unikt_id = uuid.uuid4().hex[:8]
+
+                    filnavn = (
+                        f"{filnavn}_"
+                        f"{unikt_id}"
+                        f"{filendelse.lower()}"
+                    )
+
+                    upload_folder = (
+                        current_app.config[
+                            "UPLOAD_FOLDER"
+                        ]
+                    )
+
+                    filsti = os.path.join(
+                        upload_folder,
+                        filnavn
+                    )
+
+                    # ----------------------------------------
+                    # Gem fil
+                    # ----------------------------------------
+
+                    fil.save(filsti)
+
+                    # ----------------------------------------
+                    # Nyt medie er aktivt som udgangspunkt
+                    #
+                    # Hvis udløbsdato allerede er overskredet,
+                    # sættes det til inaktivt.
+                    #
+                    # Startdato håndteres af skærmens
+                    # SQL-filter.
+                    # ----------------------------------------
+
                     aktiv = 1
 
                     if udloeb:
-                        if udloeb < date.today().isoformat():
+
+                        if (
+                            udloeb
+                            < date.today().isoformat()
+                        ):
                             aktiv = 0
 
-                    conn.execute("""
+                    # ----------------------------------------
+                    # Gem i database
+                    # ----------------------------------------
+
+                    conn.execute(
+                        """
                         INSERT INTO medier (
                             filnavn,
                             aktiv,
@@ -166,18 +294,20 @@ def admin():
                             udloebs_dato
                         )
                         VALUES (?, ?, ?, ?)
-                    """, (
-                        filnavn,
-                        aktiv,
-                        start or None,
-                        udloeb or None
-                    ))
+                        """,
+                        (
+                            filnavn,
+                            aktiv,
+                            start or None,
+                            udloeb or None
+                        )
+                    )
 
                     conn.commit()
 
-            # -----------------------------------
+            # ------------------------------------------------
             # BILLEDHASTIGHED
-            # -----------------------------------
+            # ------------------------------------------------
 
             elif "billed_sekunder" in request.form:
 
@@ -205,9 +335,9 @@ def admin():
                 ):
                     pass
 
-            # -----------------------------------
+            # ------------------------------------------------
             # TICKERHASTIGHED
-            # -----------------------------------
+            # ------------------------------------------------
 
             elif "ticker_sekunder" in request.form:
 
@@ -235,9 +365,9 @@ def admin():
                 ):
                     pass
 
-            # -----------------------------------
-            # DR
-            # -----------------------------------
+            # ------------------------------------------------
+            # DR NYHEDER
+            # ------------------------------------------------
 
             elif (
                 "dr_interval_sekunder"
@@ -258,22 +388,24 @@ def admin():
                         ]
                     )
 
-                    if (
-                        30
-                        <= interval
-                        <= 3600
-                    ):
+                    # ----------------------------------------
+                    # Interval
+                    # ----------------------------------------
+
+                    if 30 <= interval <= 3600:
+
                         set_indstilling(
                             conn,
                             "dr_interval_sekunder",
                             interval
                         )
 
-                    if (
-                        1
-                        <= antal
-                        <= 20
-                    ):
+                    # ----------------------------------------
+                    # Antal nyheder
+                    # ----------------------------------------
+
+                    if 1 <= antal <= 20:
+
                         set_indstilling(
                             conn,
                             "dr_antal",
@@ -282,6 +414,8 @@ def admin():
 
                     conn.commit()
 
+                    # Tøm nyhedscachen så de nye
+                    # indstillinger bruges med det samme.
                     reset_news_cache()
 
                 except (
@@ -291,9 +425,9 @@ def admin():
                 ):
                     pass
 
-            # -----------------------------------
+            # ------------------------------------------------
             # VEJRBY
-            # -----------------------------------
+            # ------------------------------------------------
 
             elif "valgt_by" in request.form:
 
@@ -301,10 +435,7 @@ def admin():
                     "valgt_by"
                 ]
 
-                if (
-                    by_navn
-                    in byer_koordinater
-                ):
+                if by_navn in byer_koordinater:
 
                     set_indstilling(
                         conn,
@@ -330,15 +461,25 @@ def admin():
 
                     conn.commit()
 
+            # ------------------------------------------------
+            # TILBAGE TIL ADMIN
+            # ------------------------------------------------
+
             return redirect(
                 url_for("admin.admin")
             )
 
-        alle_medier = conn.execute("""
+        # ====================================================
+        # HENT DATA TIL ADMIN
+        # ====================================================
+
+        alle_medier = conn.execute(
+            """
             SELECT *
             FROM medier
             ORDER BY id ASC
-        """).fetchall()
+            """
+        ).fetchall()
 
         alle_nyheder = (
             hent_alle_nyheder_til_admin(
@@ -371,7 +512,12 @@ def admin():
         )
 
     finally:
+
         conn.close()
+
+    # ========================================================
+    # LAGERPLADS
+    # ========================================================
 
     try:
 
@@ -404,32 +550,77 @@ def admin():
         free_gb = 0
         used_percent = 0
 
-    current_date = datetime.now().strftime(
-        "%Y-%m-%d"
+    # ========================================================
+    # DATO
+    # ========================================================
+
+    current_date = (
+        datetime.now().strftime(
+            "%Y-%m-%d"
+        )
     )
+
+    # ========================================================
+    # RENDER ADMIN
+    # ========================================================
 
     return render_template(
         "admin.html",
+
         medier=alle_medier,
+
         nyheder=alle_nyheder,
-        nuvaerende_sekunder=billed_sekunder,
-        nuvaerende_ticker_sekunder=ticker_sekunder,
-        dr_interval_sekunder=dr_interval_sekunder,
-        dr_antal=dr_antal,
-        nuvaerende_by=nuvaerende_by,
+
+        nuvaerende_sekunder=(
+            billed_sekunder
+        ),
+
+        nuvaerende_ticker_sekunder=(
+            ticker_sekunder
+        ),
+
+        dr_interval_sekunder=(
+            dr_interval_sekunder
+        ),
+
+        dr_antal=(
+            dr_antal
+        ),
+
+        nuvaerende_by=(
+            nuvaerende_by
+        ),
+
         byer=list(
             byer_koordinater.keys()
         ),
-        current_date=current_date,
-        disk_total_gb=f"{total_gb:.1f}",
-        disk_used_gb=f"{used_gb:.1f}",
-        disk_free_gb=f"{free_gb:.1f}",
+
+        current_date=(
+            current_date
+        ),
+
+        disk_total_gb=(
+            f"{total_gb:.1f}"
+        ),
+
+        disk_used_gb=(
+            f"{used_gb:.1f}"
+        ),
+
+        disk_free_gb=(
+            f"{free_gb:.1f}"
+        ),
+
         disk_used_percent=round(
             used_percent,
             1
         ),
     )
 
+
+# ============================================================
+# SKIFT AKTIV / INAKTIV
+# ============================================================
 
 @admin_bp.route(
     "/skift-status/<int:id>",
@@ -438,6 +629,7 @@ def admin():
 def skift_status(id):
 
     if not session.get("logget_ind"):
+
         return jsonify(
             success=False,
             error="Ikke logget ind"
@@ -448,6 +640,7 @@ def skift_status(id):
     )
 
     if not data:
+
         return jsonify(
             success=False,
             error="Ingen data modtaget"
@@ -463,28 +656,66 @@ def skift_status(id):
 
     try:
 
-        cursor = conn.execute("""
-            UPDATE medier
-            SET aktiv = ?
+        medie = conn.execute(
+            """
+            SELECT
+                id,
+                udloebs_dato
+            FROM medier
             WHERE id = ?
-        """, (
-            ny_status,
-            id
-        ))
+            """,
+            (id,)
+        ).fetchone()
 
-        conn.commit()
-
-        if cursor.rowcount == 0:
+        if not medie:
 
             return jsonify(
                 success=False,
                 error="Medie ikke fundet"
             ), 404
 
+        # ----------------------------------------------------
+        # Et udløbet medie må ikke aktiveres igen
+        # ----------------------------------------------------
+
+        if ny_status == 1:
+
+            udloebs_dato = medie["udloebs_dato"]
+
+            if udloebs_dato:
+
+                if udloebs_dato < date.today().isoformat():
+
+                    return jsonify(
+                        success=False,
+                        error="Mediet er udløbet"
+                    ), 400
+
+        conn.execute(
+            """
+            UPDATE medier
+            SET aktiv = ?
+            WHERE id = ?
+            """,
+            (
+                ny_status,
+                id
+            )
+        )
+
+        conn.commit()
+
     finally:
+
         conn.close()
 
-    return jsonify(success=True)
+    return jsonify(
+        success=True
+    )
+
+# ============================================================
+# ÆNDRE STARTDATO OG UDLØBSDATO
+# ============================================================
 
 @admin_bp.route(
     "/aendre-datoer/<int:id>",
@@ -493,6 +724,7 @@ def skift_status(id):
 def aendre_datoer(id):
 
     if not session.get("logget_ind"):
+
         return redirect(
             url_for("auth.login")
         )
@@ -507,111 +739,152 @@ def aendre_datoer(id):
         ""
     ).strip()
 
+    # --------------------------------------------------------
+    # Valider datoformat
+    # --------------------------------------------------------
+
+    def gyldig_dato(dato):
+
+        if not dato:
+            return True
+
+        try:
+
+            datetime.strptime(
+                dato,
+                "%Y-%m-%d"
+            )
+
+            return True
+
+        except ValueError:
+
+            return False
+
+    if not gyldig_dato(start_dato):
+        return redirect(
+            url_for("admin.admin")
+        )
+
+    if not gyldig_dato(udloebs_dato):
+        return redirect(
+            url_for("admin.admin")
+        )
+
+    # --------------------------------------------------------
+    # Kontroller at startdato ikke ligger efter udløbsdato
+    # --------------------------------------------------------
+
+    if (
+        start_dato
+        and udloebs_dato
+        and start_dato > udloebs_dato
+    ):
+
+        return redirect(
+            url_for("admin.admin")
+        )
+
     conn = get_db_connection()
 
     try:
 
+        # ----------------------------------------------------
+        # Hvis udløbsdato er overskredet,
+        # skal mediet være inaktivt.
+        # ----------------------------------------------------
+
         if udloebs_dato:
 
-            i_dag = date.today().isoformat()
+            i_dag = (
+                date.today().isoformat()
+            )
 
             if udloebs_dato < i_dag:
-                aktiv = 0
-            else:
-                aktiv = 1
 
-            conn.execute("""
-                UPDATE medier
-                SET
-                    start_dato = ?,
-                    udloebs_dato = ?,
-                    aktiv = ?
-                WHERE id = ?
-            """, (
-                start_dato or None,
-                udloebs_dato,
-                aktiv,
-                id
-            ))
+                conn.execute(
+                    """
+                    UPDATE medier
+                    SET
+                        start_dato = ?,
+                        udloebs_dato = ?,
+                        aktiv = 0
+                    WHERE id = ?
+                    """,
+                    (
+                        start_dato or None,
+                        udloebs_dato,
+                        id
+                    )
+                )
+
+            else:
+
+                # ------------------------------------------------
+                # Udløbsdato er stadig gyldig.
+                #
+                # Vi ændrer IKKE aktiv-status her.
+                # Det betyder, at hvis brugeren manuelt har
+                # deaktiveret mediet, forbliver det deaktiveret.
+                # ------------------------------------------------
+
+                conn.execute(
+                    """
+                    UPDATE medier
+                    SET
+                        start_dato = ?,
+                        udloebs_dato = ?
+                    WHERE id = ?
+                    """,
+                    (
+                        start_dato or None,
+                        udloebs_dato,
+                        id
+                    )
+                )
 
         else:
 
-            conn.execute("""
+            # ----------------------------------------------------
+            # Ingen udløbsdato
+            # ----------------------------------------------------
+
+            conn.execute(
+                """
                 UPDATE medier
                 SET
                     start_dato = ?,
                     udloebs_dato = NULL
                 WHERE id = ?
-            """, (
-                start_dato or None,
-                id
-            ))
-
-        conn.commit()
-
-    finally:
-        conn.close()
-
-    return redirect(
-        url_for("admin.admin")
-    )
-
-
-@admin_bp.route(
-    "/aendre-udloeb/<int:id>",
-    methods=["POST"]
-)
-def aendre_udloeb(id):
-
-    if not session.get("logget_ind"):
-        return redirect(
-            url_for("auth.login")
-        )
-
-    udloeb = request.form.get(
-        "udloeb_dato",
-        ""
-    ).strip()
-
-    udloeb = (
-        udloeb
-        if udloeb
-        else None
-    )
-
-
-    conn = get_db_connection()
-
-    try:
-
-        cursor = conn.execute("""
-            UPDATE medier
-            SET udloebs_dato = ?
-            WHERE id = ?
-        """, (
-            udloeb,
-            id
-        ))
-
-        conn.commit()
-
-        if cursor.rowcount == 0:
-            return (
-                "Medie ikke fundet",
-                404
+                """,
+                (
+                    start_dato or None,
+                    id
+                )
             )
 
+        conn.commit()
+
     finally:
+
         conn.close()
 
     return redirect(
         url_for("admin.admin")
     )
 
-@admin_bp.route("/slet/<int:id>")
+
+# ============================================================
+# SLET MEDIE
+# ============================================================
+
+@admin_bp.route(
+    "/slet/<int:id>"
+)
 def slet(id):
 
     if not session.get("logget_ind"):
+
         return redirect(
             url_for("auth.login")
         )
@@ -620,11 +893,14 @@ def slet(id):
 
     try:
 
-        medie = conn.execute("""
+        medie = conn.execute(
+            """
             SELECT filnavn
             FROM medier
             WHERE id = ?
-        """, (id,)).fetchone()
+            """,
+            (id,)
+        ).fetchone()
 
         if medie:
 
@@ -636,19 +912,25 @@ def slet(id):
             )
 
             try:
+
                 os.remove(filsti)
 
             except FileNotFoundError:
+
                 pass
 
-            conn.execute("""
+            conn.execute(
+                """
                 DELETE FROM medier
                 WHERE id = ?
-            """, (id,))
+                """,
+                (id,)
+            )
 
             conn.commit()
 
     finally:
+
         conn.close()
 
     return redirect(
@@ -656,10 +938,17 @@ def slet(id):
     )
 
 
-@admin_bp.route("/slet-nyhed/<int:id>")
+# ============================================================
+# SLET LOKAL NYHED
+# ============================================================
+
+@admin_bp.route(
+    "/slet-nyhed/<int:id>"
+)
 def slet_nyhed(id):
 
     if not session.get("logget_ind"):
+
         return redirect(
             url_for("auth.login")
         )
@@ -668,14 +957,18 @@ def slet_nyhed(id):
 
     try:
 
-        conn.execute("""
+        conn.execute(
+            """
             DELETE FROM ticker
             WHERE id = ?
-        """, (id,))
+            """,
+            (id,)
+        )
 
         conn.commit()
 
     finally:
+
         conn.close()
 
     return redirect(
@@ -683,7 +976,13 @@ def slet_nyhed(id):
     )
 
 
-@admin_bp.route("/uploads/<path:filename>")
+# ============================================================
+# VIS UPLOADET FIL
+# ============================================================
+
+@admin_bp.route(
+    "/uploads/<path:filename>"
+)
 def uploaded_file(filename):
 
     return send_from_directory(
@@ -692,4 +991,3 @@ def uploaded_file(filename):
         ],
         filename
     )
-

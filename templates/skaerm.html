@@ -2,6 +2,7 @@
 <html lang="da">
 
 <head>
+
     <meta charset="UTF-8">
 
     <title>Infoskærm - Live</title>
@@ -17,9 +18,12 @@
         rel="stylesheet"
         href="{{ url_for('static', filename='style.css') }}"
     >
+
 </head>
 
+
 <body>
+
 
 <!-- ============================================================
      MEDIEOMRÅDE
@@ -38,6 +42,7 @@
                     class="slide {% if loop.first %}active{% endif %}"
                     muted
                     playsinline
+                    preload="auto"
                 ></video>
 
             {% else %}
@@ -63,6 +68,7 @@
 </div>
 
 
+
 <!-- ============================================================
      SIDEPANEL
      ============================================================ -->
@@ -70,9 +76,13 @@
 <div class="sidebar">
 
     <div class="clock-section">
+
         <div id="date"></div>
+
         <div id="time"></div>
+
     </div>
+
 
     <div class="weather">
 
@@ -82,14 +92,25 @@
         ></i>
 
         <div class="weather-info">
-            <div id="weather-city">{{ by }}</div>
-            <div id="weather-temp">{{ temp }}</div>
-            <div id="weather-description">{{ beskrivelse }}</div>
+
+            <div id="weather-city">
+                {{ by }}
+            </div>
+
+            <div id="weather-temp">
+                {{ temp }}
+            </div>
+
+            <div id="weather-description">
+                {{ beskrivelse }}
+            </div>
+
         </div>
 
     </div>
 
 </div>
+
 
 
 <!-- ============================================================
@@ -102,48 +123,92 @@
         Seneste nyt
     </div>
 
-    <div
-        class="ticker"
-        id="news-ticker"
-    >
 
-        {% if nyheder %}
+    <div class="ticker-window">
 
-            {% for tekst in nyheder %}
+        <div
+            class="ticker"
+            id="news-ticker"
+        >
 
-                <div class="ticker-item">
-                    {{ tekst }}
-                </div>
+            <div
+                class="ticker-content"
+                id="ticker-content-1"
+            ></div>
 
-            {% endfor %}
+            <div
+                class="ticker-content"
+                id="ticker-content-2"
+            ></div>
 
-        {% else %}
-
-            <div class="ticker-item">
-                Ingen nye opdateringer...
-            </div>
-
-        {% endif %}
+        </div>
 
     </div>
 
 </div>
 
 
+
 <script>
+
+
+/* ============================================================
+   KONFIGURATION
+   ============================================================ */
+
+const MEDIE_TJEK_INTERVAL =
+    5000;
+
+const VEJR_INTERVAL =
+    300000;
+
+const BURNIN_INTERVAL =
+    120000;
+
 
 /* ============================================================
    MEDIEAFSPILLER
    ============================================================ */
 
-let slides = document.querySelectorAll(".slide");
-let current = 0;
-let slideshowTimeout = null;
+let slides =
+    document.querySelectorAll(".slide");
 
-let nuvaerendeMedier = [];
+let current =
+    0;
+
+let slideshowTimeout =
+    null;
+
+let nuvaerendeMedier =
+    Array.from(slides).map(
+        slide => {
+
+            const src =
+                slide.getAttribute("src");
+
+            if (!src) {
+                return null;
+            }
+
+            try {
+
+                return decodeURIComponent(
+                    src.split("/").pop()
+                );
+
+            } catch {
+
+                return src.split("/").pop();
+
+            }
+
+        }
+    ).filter(Boolean);
+
 
 let billedMillisekunder =
     {{ sekunder }} * 1000;
+
 
 
 /* ============================================================
@@ -152,51 +217,84 @@ let billedMillisekunder =
 
 function koerSlideshow() {
 
-    clearTimeout(slideshowTimeout);
+    clearTimeout(
+        slideshowTimeout
+    );
 
-    slides = document.querySelectorAll(".slide");
+    slides =
+        document.querySelectorAll(
+            ".slide"
+        );
+
 
     if (slides.length === 0) {
         return;
     }
 
-    if (slides.length === 1) {
 
-        const media = slides[0];
+    if (current >= slides.length) {
+        current = 0;
+    }
 
-        if (media.tagName === "VIDEO") {
-            media.currentTime = 0;
-            media.play().catch(() => {});
-        }
+
+    const aktivtMedie =
+        slides[current];
+
+
+    if (!aktivtMedie) {
+
+        current = 0;
+
+        return koerSlideshow();
+
+    }
+
+
+    aktivtMedie.classList.add(
+        "active"
+    );
+
+
+    /* --------------------------------------------------------
+       VIDEO
+       -------------------------------------------------------- */
+
+    if (
+        aktivtMedie.tagName === "VIDEO"
+    ) {
+
+        aktivtMedie.currentTime = 0;
+
+
+        aktivtMedie.onended =
+            () => {
+
+                skiftMedie();
+
+            };
+
+
+        aktivtMedie.play().catch(
+            () => {}
+        );
+
 
         return;
     }
 
-    const aktivtMedie = slides[current];
 
-    if (!aktivtMedie) {
-        current = 0;
-        return koerSlideshow();
-    }
+    /* --------------------------------------------------------
+       BILLEDE
+       -------------------------------------------------------- */
 
-    if (aktivtMedie.tagName === "VIDEO") {
-
-        aktivtMedie.currentTime = 0;
-
-        aktivtMedie.play().catch(() => {});
-
-        aktivtMedie.onended = () => {
-            skiftMedie();
-        };
-
-    } else {
-
-        slideshowTimeout = setTimeout(
+    slideshowTimeout =
+        setTimeout(
             skiftMedie,
             billedMillisekunder
         );
-    }
+
 }
+
 
 
 /* ============================================================
@@ -205,28 +303,74 @@ function koerSlideshow() {
 
 function skiftMedie() {
 
-    slides = document.querySelectorAll(".slide");
+    clearTimeout(
+        slideshowTimeout
+    );
+
+
+    slides =
+        document.querySelectorAll(
+            ".slide"
+        );
+
 
     if (slides.length === 0) {
         return;
     }
 
-    if (slides[current]) {
 
-        if (slides[current].tagName === "VIDEO") {
-            slides[current].pause();
-            slides[current].onended = null;
+    const gammeltMedie =
+        slides[current];
+
+
+    if (gammeltMedie) {
+
+        if (
+            gammeltMedie.tagName === "VIDEO"
+        ) {
+
+            gammeltMedie.pause();
+
+            gammeltMedie.currentTime = 0;
+
+            gammeltMedie.onended = null;
+
         }
 
-        slides[current].classList.remove("active");
+
+        gammeltMedie.classList.remove(
+            "active"
+        );
+
     }
 
-    current = (current + 1) % slides.length;
 
-    slides[current].classList.add("active");
+    current =
+        (current + 1) % slides.length;
+
+
+    const nytMedie =
+        slides[current];
+
+
+    if (!nytMedie) {
+
+        current = 0;
+
+        return koerSlideshow();
+
+    }
+
+
+    nytMedie.classList.add(
+        "active"
+    );
+
 
     koerSlideshow();
+
 }
+
 
 
 /* ============================================================
@@ -237,53 +381,105 @@ async function tjekEfterNyeMedier() {
 
     try {
 
-        const response = await fetch(
-            "/hent-aktive-medier",
-            {
-                cache: "no-store"
-            }
-        );
+        const response =
+            await fetch(
+                "/hent-aktive-medier",
+                {
+                    cache: "no-store"
+                }
+            );
+
 
         if (!response.ok) {
             return;
         }
 
-        const data = await response.json();
 
-        if (data.sekunder && data.sekunder > 0) {
+        const data =
+            await response.json();
+
+
+        if (
+            data.sekunder &&
+            data.sekunder > 0
+        ) {
+
             billedMillisekunder =
                 data.sekunder * 1000;
+
         }
+
 
         const nyMedieListe =
-            JSON.stringify(data.medier);
+            data.medier || [];
 
-        const gammelMedieListe =
-            JSON.stringify(nuvaerendeMedier);
 
-        if (nyMedieListe === gammelMedieListe) {
+        const nyListeJSON =
+            JSON.stringify(
+                nyMedieListe
+            );
+
+
+        const gammelListeJSON =
+            JSON.stringify(
+                nuvaerendeMedier
+            );
+
+
+        if (
+            nyListeJSON ===
+            gammelListeJSON
+        ) {
+
             return;
+
         }
 
-        nuvaerendeMedier = data.medier;
+
+        nuvaerendeMedier =
+            [...nyMedieListe];
+
 
         const container =
-            document.querySelector(".media-container");
+            document.querySelector(
+                ".media-container"
+            );
+
 
         if (!container) {
             return;
         }
 
-        clearTimeout(slideshowTimeout);
 
-        document.querySelectorAll("video").forEach(video => {
-            video.pause();
-        });
+        clearTimeout(
+            slideshowTimeout
+        );
+
+
+        document
+            .querySelectorAll("video")
+            .forEach(video => {
+
+                video.pause();
+
+                video.onended = null;
+
+            });
+
 
         current = 0;
+
+
         container.innerHTML = "";
 
-        if (data.medier.length === 0) {
+
+        /* ----------------------------------------------------
+           INGEN MEDIER
+           ---------------------------------------------------- */
+
+        if (
+            nyMedieListe.length === 0
+        ) {
 
             container.innerHTML = `
                 <div class="no-media">
@@ -291,51 +487,95 @@ async function tjekEfterNyeMedier() {
                 </div>
             `;
 
+
             slides =
-                document.querySelectorAll(".slide");
+                document.querySelectorAll(
+                    ".slide"
+                );
+
 
             return;
         }
 
-        data.medier.forEach((filnavn, index) => {
 
-            const erVideo =
-                filnavn.toLowerCase().endsWith(".mp4") ||
-                filnavn.toLowerCase().endsWith(".webm") ||
-                filnavn.toLowerCase().endsWith(".mov");
+        /* ----------------------------------------------------
+           OPBYG NY MEDIELISTE
+           ---------------------------------------------------- */
 
-            let element;
+        nyMedieListe.forEach(
+            (filnavn, index) => {
 
-            if (erVideo) {
+                const fil =
+                    filnavn.toLowerCase();
 
-                element =
-                    document.createElement("video");
 
-                element.muted = true;
-                element.playsInline = true;
+                const erVideo =
+                    fil.endsWith(".mp4") ||
+                    fil.endsWith(".webm") ||
+                    fil.endsWith(".mov");
 
-            } else {
 
-                element =
-                    document.createElement("img");
+                let element;
+
+
+                if (erVideo) {
+
+                    element =
+                        document.createElement(
+                            "video"
+                        );
+
+                    element.muted = true;
+
+                    element.playsInline = true;
+
+                    element.preload = "auto";
+
+                } else {
+
+                    element =
+                        document.createElement(
+                            "img"
+                        );
+
+                }
+
+
+                element.src =
+                    `/uploads/${encodeURIComponent(
+                        filnavn
+                    )}`;
+
+
+                element.className =
+                    "slide";
+
+
+                if (index === 0) {
+
+                    element.classList.add(
+                        "active"
+                    );
+
+                }
+
+
+                container.appendChild(
+                    element
+                );
+
             }
+        );
 
-            element.src =
-                `/uploads/${encodeURIComponent(filnavn)}`;
-
-            element.className = "slide";
-
-            if (index === 0) {
-                element.classList.add("active");
-            }
-
-            container.appendChild(element);
-        });
 
         slides =
-            document.querySelectorAll(".slide");
+            document.querySelectorAll(
+                ".slide"
+            );
+
 
         koerSlideshow();
+
 
     } catch (error) {
 
@@ -343,8 +583,11 @@ async function tjekEfterNyeMedier() {
             "Mediefejl:",
             error
         );
+
     }
+
 }
+
 
 
 /* ============================================================
@@ -354,109 +597,275 @@ async function tjekEfterNyeMedier() {
 let tickerMillisekunder =
     {{ ticker_sekunder }} * 1000;
 
+
 let drIntervalMillisekunder =
     {{ dr_interval_sekunder }} * 1000;
 
-let tickerUpdateTimer = null;
+
+let tickerUpdateTimer =
+    null;
 
 
-function opdaterTickerHastighed(sekunder) {
+let sidsteNyhedsTekst =
+    "";
 
-    if (!sekunder || sekunder < 1) {
+
+
+/* ============================================================
+   OPDATER TICKER-HASTIGHED
+   ============================================================ */
+
+function opdaterTickerHastighed(
+    sekunder
+) {
+
+    if (
+        !sekunder ||
+        sekunder < 1
+    ) {
+
+        return;
+
+    }
+
+
+    tickerMillisekunder =
+        sekunder * 1000;
+
+
+    const ticker =
+        document.querySelector(
+            "#news-ticker"
+        );
+
+
+    if (ticker) {
+
+        ticker.style.setProperty(
+            "--ticker-duration",
+            sekunder + "s"
+        );
+
+    }
+
+}
+
+
+
+/* ============================================================
+   OPBYG TICKER
+   ============================================================ */
+
+function bygTickerIndhold(
+    container,
+    nyheder
+) {
+
+    if (!container) {
         return;
     }
 
-    tickerMillisekunder = sekunder * 1000;
 
-    const ticker =
-        document.querySelector("#news-ticker");
+    container.innerHTML =
+        "";
 
-    if (ticker) {
-        ticker.style.animationDuration = sekunder + "s";
+
+    if (
+        !nyheder ||
+        nyheder.length === 0
+    ) {
+
+        const div =
+            document.createElement(
+                "div"
+            );
+
+
+        div.className =
+            "ticker-item";
+
+
+        div.textContent =
+            "Ingen nye opdateringer...";
+
+
+        container.appendChild(
+            div
+        );
+
+
+        return;
     }
-}
 
 
-function startNyhedsTimer() {
+    nyheder.forEach(
+        tekst => {
 
-    if (tickerUpdateTimer) {
-        clearInterval(tickerUpdateTimer);
-    }
+            const div =
+                document.createElement(
+                    "div"
+                );
 
-    tickerUpdateTimer = setInterval(
-        reloadTickerNews,
-        drIntervalMillisekunder
+
+            div.className =
+                "ticker-item";
+
+
+            div.textContent =
+                tekst;
+
+
+            container.appendChild(
+                div
+            );
+
+        }
     );
+
 }
 
+
+
+/* ============================================================
+   HENT NYHEDER
+   ============================================================ */
 
 async function reloadTickerNews() {
 
     try {
 
-        const response = await fetch(
-            "/hent-nyheder",
-            {
-                cache: "no-store"
-            }
-        );
+        const response =
+            await fetch(
+                "/hent-nyheder",
+                {
+                    cache: "no-store"
+                }
+            );
+
 
         if (!response.ok) {
             return;
         }
 
-        const data = await response.json();
 
-        const tickerContainer =
-            document.querySelector("#news-ticker");
+        const data =
+            await response.json();
 
-        if (!tickerContainer) {
-            return;
-        }
 
-        if (data.ticker_sekunder) {
+        /* ----------------------------------------------------
+           TICKER HASTIGHED
+           ---------------------------------------------------- */
+
+        if (
+            data.ticker_sekunder &&
+            data.ticker_sekunder > 0
+        ) {
+
             opdaterTickerHastighed(
                 data.ticker_sekunder
             );
+
         }
 
-        if (data.dr_interval_sekunder) {
 
-            drIntervalMillisekunder =
-                data.dr_interval_sekunder * 1000;
+        /* ----------------------------------------------------
+           DR OPDATERINGSINTERVAL
+           ---------------------------------------------------- */
 
-            startNyhedsTimer();
+        if (
+            data.dr_interval_sekunder &&
+            data.dr_interval_sekunder > 0
+        ) {
+
+            const nytInterval =
+                data.dr_interval_sekunder *
+                1000;
+
+
+            if (
+                nytInterval !==
+                drIntervalMillisekunder
+            ) {
+
+                drIntervalMillisekunder =
+                    nytInterval;
+
+
+                startNyhedsTimer();
+
+            }
+
         }
 
-        tickerContainer.innerHTML = "";
+
+        /* ----------------------------------------------------
+           NYHEDER
+           ---------------------------------------------------- */
 
         const alleNyheder =
             data.nyheder || [];
 
-        if (alleNyheder.length === 0) {
 
-            tickerContainer.innerHTML = `
-                <div class="ticker-item">
-                    Ingen nye opdateringer...
-                </div>
-            `;
+        const nyhedsTekst =
+            alleNyheder.join("|||");
+
+
+        /*
+         * Hvis nyhederne er identiske,
+         * skal vi ikke ændre DOM'en.
+         */
+
+        if (
+            nyhedsTekst ===
+            sidsteNyhedsTekst
+        ) {
 
             return;
+
         }
 
-        alleNyheder.forEach(tekst => {
 
-            const div =
-                document.createElement("div");
+        sidsteNyhedsTekst =
+            nyhedsTekst;
 
-            div.className =
-                "ticker-item";
 
-            div.textContent =
-                tekst;
+        const ticker1 =
+            document.querySelector(
+                "#ticker-content-1"
+            );
 
-            tickerContainer.appendChild(div);
-        });
+
+        const ticker2 =
+            document.querySelector(
+                "#ticker-content-2"
+            );
+
+
+        if (
+            !ticker1 ||
+            !ticker2
+        ) {
+
+            return;
+
+        }
+
+
+        /*
+         * Opdater begge spor.
+         */
+
+        bygTickerIndhold(
+            ticker1,
+            alleNyheder
+        );
+
+
+        bygTickerIndhold(
+            ticker2,
+            alleNyheder
+        );
+
 
     } catch (error) {
 
@@ -464,8 +873,36 @@ async function reloadTickerNews() {
             "Nyhedsfejl:",
             error
         );
+
     }
+
 }
+
+
+
+/* ============================================================
+   START NYHEDSTIMER
+   ============================================================ */
+
+function startNyhedsTimer() {
+
+    if (tickerUpdateTimer) {
+
+        clearInterval(
+            tickerUpdateTimer
+        );
+
+    }
+
+
+    tickerUpdateTimer =
+        setInterval(
+            reloadTickerNews,
+            drIntervalMillisekunder
+        );
+
+}
+
 
 
 /* ============================================================
@@ -476,47 +913,85 @@ async function hentVejr() {
 
     try {
 
-        const response = await fetch(
-            "/hent-vejr",
-            {
-                cache: "no-store"
-            }
-        );
+        const response =
+            await fetch(
+                "/hent-vejr",
+                {
+                    cache: "no-store"
+                }
+            );
+
 
         if (!response.ok) {
             return;
         }
 
-        const data = await response.json();
+
+        const data =
+            await response.json();
+
 
         const temp =
-            document.getElementById("weather-temp");
+            document.getElementById(
+                "weather-temp"
+            );
+
 
         const description =
-            document.getElementById("weather-description");
+            document.getElementById(
+                "weather-description"
+            );
+
 
         const city =
-            document.getElementById("weather-city");
+            document.getElementById(
+                "weather-city"
+            );
+
 
         const icon =
-            document.getElementById("weather-icon");
+            document.getElementById(
+                "weather-icon"
+            );
+
 
         if (temp) {
-            temp.textContent = data.temp;
+
+            temp.textContent =
+                data.temp;
+
         }
+
 
         if (description) {
-            description.textContent = data.beskrivelse;
+
+            description.textContent =
+                data.beskrivelse;
+
         }
 
-        if (city && data.by) {
-            city.textContent = data.by;
+
+        if (
+            city &&
+            data.by
+        ) {
+
+            city.textContent =
+                data.by;
+
         }
 
-        if (icon && data.ikon) {
+
+        if (
+            icon &&
+            data.ikon
+        ) {
+
             icon.className =
                 "bi bi-" + data.ikon;
+
         }
+
 
     } catch (error) {
 
@@ -524,23 +999,34 @@ async function hentVejr() {
             "Vejrfejl:",
             error
         );
+
     }
+
 }
 
 
+
 /* ============================================================
-   UR
+   UR OG DATO
    ============================================================ */
 
 function updateClock() {
 
-    const now = new Date();
+    const now =
+        new Date();
+
 
     const time =
-        document.getElementById("time");
+        document.getElementById(
+            "time"
+        );
+
 
     const date =
-        document.getElementById("date");
+        document.getElementById(
+            "date"
+        );
+
 
     if (time) {
 
@@ -552,7 +1038,9 @@ function updateClock() {
                     minute: "2-digit"
                 }
             );
+
     }
+
 
     if (date) {
 
@@ -566,78 +1054,41 @@ function updateClock() {
                 }
             );
 
+
         date.innerText =
             dateStr
                 .toUpperCase()
-                .replace(/,/g, "");
+                .replace(
+                    /,/g,
+                    ""
+                );
+
     }
+
 }
 
-
-/* ============================================================
-   START
-   ============================================================ */
-
-updateClock();
-
-setInterval(
-    updateClock,
-    1000
-);
-
-tjekEfterNyeMedier();
-
-hentVejr();
-
-/* Start nyhedsbjælken med den gemte hastighed */
-opdaterTickerHastighed(
-    {{ ticker_sekunder }}
-);
-
-reloadTickerNews().then(() => {
-    startNyhedsTimer();
-});
-
-
-/*
- * Medier kontrolleres hvert 5. sekund.
- * Det betyder, at aktivering/deaktivering
- * på admin-siden bliver opdaget automatisk.
- */
-
-setInterval(
-    tjekEfterNyeMedier,
-    5000
-);
-
-
-/*
- * Vejret hvert 5. minut.
- */
-
-setInterval(
-    hentVejr,
-    300000
-);
-
-
-/* Nyhedstimeren startes ovenfor med den valgte tid. */
 
 
 /* ============================================================
    BURN-IN BESKYTTELSE
    ============================================================ */
 
-let burnInPosition = 0;
+let burnInPosition =
+    0;
+
 
 function skiftBurnIn() {
 
     const clock =
-        document.querySelector(".clock-section");
+        document.querySelector(
+            ".clock-section"
+        );
+
 
     if (!clock) {
         return;
     }
+
 
     clock.classList.remove(
         "burnin-0",
@@ -647,20 +1098,96 @@ function skiftBurnIn() {
         "burnin-4"
     );
 
+
     burnInPosition =
         (burnInPosition + 1) % 5;
+
 
     clock.classList.add(
         "burnin-" + burnInPosition
     );
+
 }
+
+
+
+/* ============================================================
+   START
+   ============================================================ */
+
+
+/*
+ * Ur
+ */
+
+updateClock();
+
+
+setInterval(
+    updateClock,
+    1000
+);
+
+
+/*
+ * Medier
+ */
+
+koerSlideshow();
+
+
+tjekEfterNyeMedier();
+
+
+setInterval(
+    tjekEfterNyeMedier,
+    MEDIE_TJEK_INTERVAL
+);
+
+
+/*
+ * Vejr
+ */
+
+hentVejr();
+
+
+setInterval(
+    hentVejr,
+    VEJR_INTERVAL
+);
+
+
+/*
+ * Nyheder
+ */
+
+opdaterTickerHastighed(
+    {{ ticker_sekunder }}
+);
+
+
+reloadTickerNews()
+    .then(() => {
+
+        startNyhedsTimer();
+
+    });
+
+
+/*
+ * Burn-in beskyttelse
+ */
 
 setInterval(
     skiftBurnIn,
-    120000
+    BURNIN_INTERVAL
 );
+
 
 </script>
 
+
 </body>
+
 </html>

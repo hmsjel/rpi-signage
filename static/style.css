@@ -5,13 +5,20 @@
 }
 
 
+/* ============================================================
+   BODY
+   ============================================================ */
+
 body {
     background: #000;
     color: #fff;
     font-family: Arial, sans-serif;
+
     overflow: hidden;
+
     width: 100vw;
     height: 100vh;
+
     display: flex;
 }
 
@@ -21,16 +28,27 @@ body {
    ============================================================ */
 
 .media-container {
+
     position: relative;
+
     flex: 1;
+
     height: calc(100vh - 60px);
+
     background: #000;
+
     overflow: hidden;
 }
 
 
+/* ============================================================
+   MEDIER
+   ============================================================ */
+
 .slide {
+
     position: absolute;
+
     top: 0;
     left: 0;
 
@@ -40,15 +58,24 @@ body {
     object-fit: contain;
 
     display: none;
+
+    background: #000;
 }
 
 
-.active {
+/* Aktivt medie */
+
+.slide.active {
     display: block;
 }
 
 
-.ingen-medier {
+/* ============================================================
+   INGEN MEDIER
+   ============================================================ */
+
+.no-media {
+
     position: absolute;
 
     top: 50%;
@@ -59,7 +86,10 @@ body {
 
     font-size: 30px;
 
-    color: white;
+    color: #fff;
+
+    text-align: center;
+
 }
 
 
@@ -92,7 +122,7 @@ body {
 
     box-shadow:
         -5px 0 20px
-        rgba(0,0,0,0.5);
+        rgba(0, 0, 0, 0.5);
 
 }
 
@@ -120,6 +150,8 @@ body {
 }
 
 
+/* DATO */
+
 #date {
 
     font-size: 14px;
@@ -134,6 +166,8 @@ body {
 
 }
 
+
+/* KLOKKESLÆT */
 
 #time {
 
@@ -153,32 +187,42 @@ body {
    ============================================================ */
 
 .clock-section.burnin-0 {
+
     transform:
         translate(0, 0);
+
 }
 
 
 .clock-section.burnin-1 {
+
     transform:
         translate(3px, 2px);
+
 }
 
 
 .clock-section.burnin-2 {
+
     transform:
         translate(-3px, 2px);
+
 }
 
 
 .clock-section.burnin-3 {
+
     transform:
         translate(3px, -2px);
+
 }
 
 
 .clock-section.burnin-4 {
+
     transform:
         translate(-3px, -2px);
+
 }
 
 
@@ -203,6 +247,8 @@ body {
 }
 
 
+/* VEJR IKON */
+
 #weather-icon {
 
     font-size: 48px;
@@ -212,6 +258,8 @@ body {
 }
 
 
+/* VEJR INFORMATION */
+
 .weather-info {
 
     text-align: center;
@@ -220,6 +268,8 @@ body {
 
 }
 
+
+/* BY */
 
 #weather-city {
 
@@ -232,6 +282,8 @@ body {
 }
 
 
+/* TEMPERATUR */
+
 #weather-temp {
 
     font-size: 42px;
@@ -240,6 +292,8 @@ body {
 
 }
 
+
+/* BESKRIVELSE */
 
 #weather-description {
 
@@ -264,7 +318,6 @@ body {
     position: absolute;
 
     bottom: 0;
-
     left: 0;
 
     width: 100vw;
@@ -288,11 +341,16 @@ body {
 }
 
 
+/* ============================================================
+   SENESTE NYT LABEL
+   ============================================================ */
+
 .ticker-label {
 
-    background: #e60000;
+    background:
+        #e60000;
 
-    color: white;
+    color: #fff;
 
     font-weight: bold;
 
@@ -307,6 +365,7 @@ body {
     position: absolute;
 
     left: 0;
+    top: 0;
 
     z-index: 11;
 
@@ -319,24 +378,108 @@ body {
 }
 
 
+/* ============================================================
+   TICKER VINDUE
+   ============================================================ */
+
+.ticker-window {
+
+    flex: 1;
+
+    height: 100%;
+
+    overflow: hidden;
+
+    position: relative;
+
+}
+
+
+/* ============================================================
+   TICKER
+   ============================================================ */
+
 .ticker {
 
     display: flex;
 
     align-items: center;
 
-    white-space: nowrap;
+    height: 100%;
 
-    padding-left: 100%;
+    width: max-content;
+
+    white-space: nowrap;
 
     animation:
         ticker-move
-        45s
+        var(--ticker-duration, 45s)
         linear
         infinite;
 
 }
 
+
+/* ============================================================
+   TICKER INDHOLD
+   ============================================================ */
+
+.ticker-content {
+
+    display: flex;
+
+    align-items: center;
+
+    flex-shrink: 0;
+
+}
+
+
+/* ============================================================
+   TICKER TEKST
+   ============================================================ */
+
+.ticker-item {
+
+    display: inline-block;
+
+    padding: 0 40px;
+
+    font-size: 20px;
+
+    color: #fff;
+
+    white-space: nowrap;
+
+}
+
+
+/* ============================================================
+   TICKER ANIMATION
+   ============================================================ */
+
+@keyframes ticker-move {
+
+    0% {
+
+        transform:
+            translateX(0);
+
+    }
+
+    100% {
+
+        transform:
+            translateX(-50%);
+
+    }
+
+}
+
+
+/* ============================================================
+   TICKER TEKST
+   ============================================================ */
 
 .ticker-item {
 
@@ -361,39 +504,49 @@ body {
     0% {
 
         transform:
-            translate3d(
-                0,
-                0,
-                0
-            );
+            translateX(0);
 
     }
 
     100% {
 
         transform:
-            translate3d(
-                -100%,
-                0,
-                0
-            );
+            translateX(-50%);
 
     }
 
 }
 
+
+/* ============================================================
+   DATOFORM
+   ============================================================ */
+
 .date-form {
+
     display: flex;
+
     flex-direction: column;
+
     gap: 5px;
+
 }
+
 
 .date-form input {
+
     min-width: 150px;
+
 }
 
+
 .date-form button {
+
     width: 100%;
-    background: #0d6efd;
-    color: white;
+
+    background:
+        #0d6efd;
+
+    color: #fff;
+
 }

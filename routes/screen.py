@@ -41,7 +41,7 @@ def skaerm():
         aktive_medier = conn.execute("""
             SELECT filnavn
             FROM medier
-            
+
             WHERE aktiv = 1
 
                 AND (
@@ -53,10 +53,9 @@ def skaerm():
                 AND (
                     udloebs_dato IS NULL
                     OR udloebs_dato = ''
-                    OR udloebs_dato = ''
                     OR udloebs_dato >= ?
                 )
-            
+
             ORDER BY id ASC
         """, (idag, idag)).fetchall()
 
@@ -85,14 +84,26 @@ def skaerm():
 
     return render_template(
         "skaerm.html",
+
         medier=aktive_medier,
+
         nyheder=lokale_nyheder,
+
         temp="--°C",
+
         beskrivelse="Henter vejr...",
+
         by=VEJR_BY,
+
         sekunder=billed_sekunder,
+
         ticker_sekunder=ticker_sekunder,
-        dr_interval_sekunder=dr_interval_sekunder,
+
+        dr_interval_sekunder=(
+            dr_interval_sekunder
+        ),
+
         dr_antal=dr_antal,
+
         ikon="cloud-sun"
     )
