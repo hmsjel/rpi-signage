@@ -77,7 +77,7 @@
         <div class="error">{{ fejl }}</div>
     {% endif %}
 
-    <form method="POST" action="{{ url_for('login') }}">
+    <form method="POST" action="{{ url_for('auth.login') }}">
 
         <label for="brugernavn">
             Brugernavn

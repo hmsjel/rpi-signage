@@ -234,7 +234,7 @@
 
 <div class="topbar">
     <h1>🖥️ Signage Admin Panel</h1>
-    <a class="logout" href="{{ url_for('logout') }}">↪ Log ud</a>
+    <a class="logout" href="{{ url_for('auth.logout') }}">↪ Log ud</a>
 </div>
 
 <div class="settings-grid">
@@ -243,7 +243,7 @@
     <div class="card">
         <h2>☁️ Upload nyt medie</h2>
 
-        <form action="{{ url_for('admin') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ url_for('admin.admin') }}" method="POST" enctype="multipart/form-data">
             <label>Vælg billede eller video:</label>
             <input type="file" name="medie_fil" accept="image/*,video/*" required>
 
@@ -258,7 +258,7 @@
     <div class="card">
         <h2>📰 Tilføj rullende nyhed</h2>
 
-        <form action="{{ url_for('admin') }}" method="POST">
+        <form action="{{ url_for('admin.admin') }}" method="POST">
             <label>Skriv nyhedsbesked:</label>
             <input
                 type="text"
@@ -275,7 +275,7 @@
     <div class="card">
         <h2>🖼️ Slideshow hastighed</h2>
 
-        <form action="{{ url_for('admin') }}" method="POST">
+        <form action="{{ url_for('admin.admin') }}" method="POST">
             <label>Visningstid for billeder (sekunder):</label>
 
             <input
@@ -295,7 +295,7 @@
     <div class="card">
         <h2>⏱️ Nyhedsbjælke hastighed</h2>
 
-        <form action="{{ url_for('admin') }}" method="POST">
+        <form action="{{ url_for('admin.admin') }}" method="POST">
             <label>Animationstid (sekunder):</label>
 
             <input
@@ -315,7 +315,7 @@
     <div class="card">
         <h2>☁️ Vejr-lokation</h2>
 
-        <form action="{{ url_for('admin') }}" method="POST">
+        <form action="{{ url_for('admin.admin') }}" method="POST">
             <label>Vælg by:</label>
 
             <select name="valgt_by">
@@ -337,7 +337,7 @@
     <div class="card">
         <h2>📰 Nyheder (DR)</h2>
 
-        <form action="{{ url_for('admin') }}" method="POST">
+        <form action="{{ url_for('admin.admin') }}" method="POST">
             <label>Opdateringsinterval (sekunder):</label>
 
             <input
@@ -414,7 +414,7 @@
                     <td>
                         <a
                             class="delete"
-                            href="{{ url_for('slet_nyhed', id=nyhed.id) }}"
+                            href="{{ url_for('admin.slet_nyhed', id=nyhed.id) }}"
                             onclick="return confirm('Vil du slette denne nyhed?')"
                         >
                             Slet
@@ -451,13 +451,13 @@
                     <td>
                         {% if medie.filnavn.lower().endswith(('.mp4', '.webm', '.mov')) %}
                             <video
-                                src="{{ url_for('uploaded_file', filename=medie.filnavn) }}"
+                                src="{{ url_for('admin.uploaded_file', filename=medie.filnavn) }}"
                                 class="preview"
                                 muted
                             ></video>
                         {% else %}
                             <img
-                                src="{{ url_for('uploaded_file', filename=medie.filnavn) }}"
+                                src="{{ url_for('admin.uploaded_file', filename=medie.filnavn) }}"
                                 class="preview"
                                 alt="Preview"
                             >
@@ -495,7 +495,7 @@
                     <td>
                         <a
                             class="delete"
-                            href="{{ url_for('slet', id=medie.id) }}"
+                            href="{{ url_for('admin.slet', id=medie.id) }}"
                             onclick="return confirm('Vil du slette filen helt?')"
                         >
                             Slet

@@ -34,7 +34,7 @@
             {% if medie["filnavn"].lower().endswith(('.mp4', '.webm', '.mov')) %}
 
                 <video
-                    src="{{ url_for('uploaded_file', filename=medie['filnavn']) }}"
+                    src="{{ url_for('admin.uploaded_file', filename=medie['filnavn']) }}"
                     class="slide {% if loop.first %}active{% endif %}"
                     muted
                     playsinline
@@ -43,7 +43,7 @@
             {% else %}
 
                 <img
-                    src="{{ url_for('uploaded_file', filename=medie['filnavn']) }}"
+                    src="{{ url_for('admin.uploaded_file', filename=medie['filnavn']) }}"
                     class="slide {% if loop.first %}active{% endif %}"
                     alt="Medie"
                 >
