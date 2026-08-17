@@ -63,8 +63,6 @@ body {
 }
 
 
-/* Aktivt medie */
-
 .slide.active {
     display: block;
 }
@@ -89,7 +87,6 @@ body {
     color: #fff;
 
     text-align: center;
-
 }
 
 
@@ -123,7 +120,6 @@ body {
     box-shadow:
         -5px 0 20px
         rgba(0, 0, 0, 0.5);
-
 }
 
 
@@ -146,7 +142,6 @@ body {
 
     transition:
         transform 1s ease;
-
 }
 
 
@@ -163,7 +158,6 @@ body {
 
     text-transform:
         uppercase;
-
 }
 
 
@@ -178,7 +172,6 @@ body {
     color: #fff;
 
     margin-top: 5px;
-
 }
 
 
@@ -190,7 +183,6 @@ body {
 
     transform:
         translate(0, 0);
-
 }
 
 
@@ -198,7 +190,6 @@ body {
 
     transform:
         translate(3px, 2px);
-
 }
 
 
@@ -206,7 +197,6 @@ body {
 
     transform:
         translate(-3px, 2px);
-
 }
 
 
@@ -214,7 +204,6 @@ body {
 
     transform:
         translate(3px, -2px);
-
 }
 
 
@@ -222,7 +211,6 @@ body {
 
     transform:
         translate(-3px, -2px);
-
 }
 
 
@@ -243,7 +231,6 @@ body {
     flex-direction: column;
 
     align-items: center;
-
 }
 
 
@@ -254,7 +241,6 @@ body {
     font-size: 48px;
 
     margin-bottom: 10px;
-
 }
 
 
@@ -265,7 +251,6 @@ body {
     text-align: center;
 
     width: 100%;
-
 }
 
 
@@ -278,7 +263,6 @@ body {
     color: #aaa;
 
     margin-bottom: 5px;
-
 }
 
 
@@ -289,7 +273,6 @@ body {
     font-size: 42px;
 
     font-weight: bold;
-
 }
 
 
@@ -305,7 +288,6 @@ body {
 
     text-transform:
         capitalize;
-
 }
 
 
@@ -337,7 +319,6 @@ body {
     overflow: hidden;
 
     z-index: 10;
-
 }
 
 
@@ -374,7 +355,6 @@ body {
     display: flex;
 
     align-items: center;
-
 }
 
 
@@ -384,14 +364,23 @@ body {
 
 .ticker-window {
 
-    flex: 1;
+    position: absolute;
+
+    left: 0;
+
+    top: 0;
+
+    width: 100%;
 
     height: 100%;
 
     overflow: hidden;
 
-    position: relative;
+    padding-left: 150px;
 
+    display: flex;
+
+    align-items: center;
 }
 
 
@@ -416,7 +405,6 @@ body {
         var(--ticker-duration, 45s)
         linear
         infinite;
-
 }
 
 
@@ -432,48 +420,7 @@ body {
 
     flex-shrink: 0;
 
-}
-
-
-/* ============================================================
-   TICKER TEKST
-   ============================================================ */
-
-.ticker-item {
-
-    display: inline-block;
-
-    padding: 0 40px;
-
-    font-size: 20px;
-
-    color: #fff;
-
     white-space: nowrap;
-
-}
-
-
-/* ============================================================
-   TICKER ANIMATION
-   ============================================================ */
-
-@keyframes ticker-move {
-
-    0% {
-
-        transform:
-            translateX(0);
-
-    }
-
-    100% {
-
-        transform:
-            translateX(-50%);
-
-    }
-
 }
 
 
@@ -492,6 +439,7 @@ body {
 
     color: #fff;
 
+    white-space: nowrap;
 }
 
 
@@ -505,16 +453,13 @@ body {
 
         transform:
             translateX(0);
-
     }
 
     100% {
 
         transform:
             translateX(-50%);
-
     }
-
 }
 
 
@@ -529,14 +474,12 @@ body {
     flex-direction: column;
 
     gap: 5px;
-
 }
 
 
 .date-form input {
 
     min-width: 150px;
-
 }
 
 
@@ -548,5 +491,4 @@ body {
         #0d6efd;
 
     color: #fff;
-
 }
