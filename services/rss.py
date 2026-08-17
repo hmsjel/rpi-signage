@@ -10,6 +10,10 @@ from config import (
 from database.db import get_db_connection
 from database.settings import get_dr_antal
 
+news_cache = {
+    "timestamp": 0,
+    "data": []
+}
 
 def reset_news_cache():
     global news_cache
