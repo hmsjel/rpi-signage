@@ -25,7 +25,6 @@ app.register_blueprint(screen_bp)
 app.register_blueprint(api_bp)
 app.register_blueprint(admin_bp)
 
-print(app.url_map)
 
 if __name__ == "__main__":
     app.run(
