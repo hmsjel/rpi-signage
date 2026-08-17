@@ -41,14 +41,24 @@ def skaerm():
         aktive_medier = conn.execute("""
             SELECT filnavn
             FROM medier
+            
             WHERE aktiv = 1
-            AND (
-                udloebs_dato IS NULL
-                OR udloebs_dato = ''
-                OR udloebs_dato >= ?
-            )
+
+                AND (
+                    start_dato IS NULL
+                    OR start_dato = ''
+                    OR start_dato <= ?
+                )
+
+                AND (
+                    udloebs_dato IS NULL
+                    OR udloebs_dato = ''
+                    OR udloebs_dato = ''
+                    OR udloebs_dato >= ?
+                )
+            
             ORDER BY id ASC
-        """, (idag,)).fetchall()
+        """, (idag, idag)).fetchall()
 
         lokale_nyheder = (
             hent_lokale_nyheder(conn)

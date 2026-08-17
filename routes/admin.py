@@ -96,12 +96,21 @@ def admin():
             elif "medie_fil" in request.files:
 
                 fil = request.files["medie_fil"]
+                start = request.form.get(
+                    "start_dato",
+                    ""
+                ).strip()
+
+                start = request.form.get(
+                    "start_dato",
+                    ""
+                ).strip()
 
                 udloeb = request.form.get(
                     "udloeb_dato",
                     ""
                 ).strip()
-
+                
                 if (
                     fil
                     and fil.filename
@@ -127,6 +136,7 @@ def admin():
                         INSERT INTO medier (
                             filnavn,
                             aktiv,
+                            start_dato,
                             udloebs_dato
                         )
                         VALUES (
@@ -134,6 +144,7 @@ def admin():
                         )
                     """, (
                         filnavn,
+                        start,
                         udloeb
                     ))
 
@@ -450,6 +461,51 @@ def skift_status(id):
 
     return jsonify(success=True)
 
+@admin_bp.route(
+    "/aendre-datoer/<int:id>",
+    methods=["POST"]
+)
+def aendre_datoer(id):
+
+    if not session.get("logget_ind"):
+        return redirect(
+            url_for("auth.login")
+        )
+
+    start_dato = request.form.get(
+        "start_dato",
+        ""
+    ).strip()
+
+    udloebs_dato = request.form.get(
+        "udloebs_dato",
+        ""
+    ).strip()
+
+    conn = get_db_connection()
+
+    try:
+
+        conn.execute("""
+            UPDATE medier
+            SET
+                start_dato = ?,
+                udloebs_dato = ?
+            WHERE id = ?
+        """, (
+            start_dato or None,
+            udloebs_dato or None,
+            id,
+        ))
+
+        conn.commit()
+
+    finally:
+        conn.close()
+
+    return redirect(
+        url_for("admin.admin")
+    )
 
 @admin_bp.route(
     "/aendre-udloeb/<int:id>",
@@ -472,6 +528,7 @@ def aendre_udloeb(id):
         if udloeb
         else None
     )
+
 
     conn = get_db_connection()
 

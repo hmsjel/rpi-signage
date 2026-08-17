@@ -1,265 +1,559 @@
 <!DOCTYPE html>
 <html lang="da">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Signage Admin Panel</title>
 
+
     <style>
+
         * {
             box-sizing: border-box;
         }
 
+
         body {
             margin: 0;
             padding: 22px;
+
             font-family: Arial, sans-serif;
+
             background: #f4f5f9;
             color: #222;
         }
 
+
+        /* TOPBAR */
+
         .topbar {
+
             display: flex;
+
             justify-content: space-between;
             align-items: center;
+
             margin-bottom: 20px;
         }
 
+
         h1 {
+
             margin: 0;
+
             font-size: 28px;
         }
 
+
         .logout {
+
             background: #dc3545;
+
             color: white;
+
             text-decoration: none;
+
             padding: 10px 18px;
+
             border-radius: 6px;
         }
 
+
+        /* SETTINGS */
+
         .settings-grid {
+
             display: grid;
-            grid-template-columns: repeat(6, minmax(0, 1fr));
+
+            grid-template-columns:
+                repeat(6, minmax(0, 1fr));
+
             gap: 14px;
         }
 
+
         .card {
+
             background: white;
+
             border-radius: 9px;
+
             padding: 16px;
-            box-shadow: 0 3px 10px rgba(0,0,0,.08);
+
+            box-shadow:
+                0 3px 10px rgba(0,0,0,.08);
+
             min-width: 0;
         }
 
+
         .card h2 {
+
             font-size: 17px;
-            margin: 0 0 15px;
+
+            margin:
+                0 0 15px;
         }
 
+
         label {
+
             display: block;
+
             font-weight: bold;
+
             font-size: 13px;
-            margin: 10px 0 5px;
+
+            margin:
+                10px 0 5px;
         }
+
 
         input,
         select {
+
             width: 100%;
+
             padding: 9px;
-            border: 1px solid #ccc;
+
+            border:
+                1px solid #ccc;
+
             border-radius: 5px;
+
             font-size: 14px;
         }
+
 
         button {
+
             width: 100%;
+
             border: 0;
+
             border-radius: 5px;
+
             padding: 10px;
+
             margin-top: 12px;
+
             color: white;
+
             cursor: pointer;
+
             font-size: 14px;
         }
 
+
         button:hover {
+
             opacity: .9;
         }
 
-        .blue { background: #0d6efd; }
-        .green { background: #28a745; }
-        .gray { background: #6c757d; }
-        .cyan { background: #17a2b8; }
-        .purple { background: #6f42c1; }
+
+        .blue {
+            background: #0d6efd;
+        }
+
+
+        .green {
+            background: #28a745;
+        }
+
+
+        .gray {
+            background: #6c757d;
+        }
+
+
+        .cyan {
+            background: #17a2b8;
+        }
+
+
+        .purple {
+            background: #6f42c1;
+        }
+
+
+        /* STORAGE */
 
         .storage {
+
             margin-top: 16px;
         }
 
+
         .storage-title {
+
             font-size: 20px;
+
             font-weight: bold;
+
             margin-bottom: 10px;
         }
 
+
         .progress {
+
             width: 100%;
+
             height: 22px;
+
             background: #e9ecef;
+
             border-radius: 15px;
+
             overflow: hidden;
         }
 
+
         .progress-bar {
+
             height: 100%;
+
             background: #0d6efd;
         }
 
+
         .storage-info {
+
             font-size: 13px;
+
             color: #666;
+
             margin-top: 8px;
         }
 
+
+        /* CONTENT */
+
         .content-grid {
+
             display: grid;
-            grid-template-columns: 1fr 1.25fr;
+
+            grid-template-columns:
+                1fr 1.25fr;
+
             gap: 16px;
+
             margin-top: 16px;
         }
 
+
         .table-wrap {
+
             overflow-x: auto;
         }
 
+
         table {
+
             width: 100%;
+
             border-collapse: collapse;
         }
 
+
         th,
         td {
-            padding: 9px 7px;
-            border-bottom: 1px solid #e5e5e5;
+
+            padding:
+                9px 7px;
+
+            border-bottom:
+                1px solid #e5e5e5;
+
             text-align: left;
+
             font-size: 13px;
+
             vertical-align: middle;
         }
 
+
         th {
+
             background: #f7f7f7;
         }
 
+
+        /* DELETE */
+
         .delete {
+
             color: #dc3545;
+
             text-decoration: none;
+
             font-weight: bold;
         }
 
+
+        /* PREVIEW */
+
         .preview {
+
             width: 70px;
+
             height: 45px;
+
             object-fit: cover;
+
             background: black;
+
             border-radius: 4px;
         }
 
+
+        /* STATUS */
+
         .active {
+
             color: #198754;
+
             font-weight: bold;
         }
+
 
         .inactive {
+
             color: #6c757d;
+
             font-weight: bold;
         }
 
+
+        /* EXPIRY */
+
         .expiry {
+
             color: #198754;
         }
 
+
+        /* DATE FORM */
+
         .date-form {
+
             display: flex;
+
             gap: 5px;
         }
 
+
         .date-form input {
+
             min-width: 130px;
         }
 
+
         .date-form button {
+
             width: auto;
+
             margin: 0;
-            padding: 7px 10px;
+
+            padding:
+                7px 10px;
+
             background: #0d6efd;
         }
 
+
+        /* SWITCH */
+
         .switch {
-            transform: scale(1.2);
+
+            transform:
+                scale(1.2);
+
+            cursor: pointer;
         }
 
+
+        /* HINT */
+
         .hint {
+
             color: #777;
+
             font-size: 12px;
+
             margin-top: 8px;
         }
 
+
+        /* ACTION BUTTON */
+
+        .save-button {
+
+            width: auto;
+
+            margin: 0;
+
+            padding:
+                7px 12px;
+
+            background: #0d6efd;
+        }
+
+
+        /* MOBILE */
+
         @media (max-width: 1200px) {
+
             .settings-grid {
-                grid-template-columns: repeat(3, 1fr);
+
+                grid-template-columns:
+                    repeat(3, 1fr);
             }
         }
 
+
         @media (max-width: 800px) {
+
             body {
+
                 padding: 12px;
             }
 
+
             .settings-grid,
             .content-grid {
+
                 grid-template-columns: 1fr;
             }
 
+
             .topbar {
-                align-items: flex-start;
+
+                align-items:
+                    flex-start;
+
                 gap: 12px;
             }
         }
+
     </style>
+
 </head>
+
 
 <body>
 
+
+<!-- TOPBAR -->
+
 <div class="topbar">
-    <h1>🖥️ Signage Admin Panel</h1>
-    <a class="logout" href="{{ url_for('auth.logout') }}">↪ Log ud</a>
+
+    <h1>
+        🖥️ Signage Admin Panel
+    </h1>
+
+
+    <a
+        class="logout"
+        href="{{ url_for('auth.logout') }}"
+    >
+        ↪ Log ud
+    </a>
+
 </div>
+
+
+
+<!-- SETTINGS -->
 
 <div class="settings-grid">
 
+
     <!-- UPLOAD -->
+
     <div class="card">
-        <h2>☁️ Upload nyt medie</h2>
 
-        <form action="{{ url_for('admin.admin') }}" method="POST" enctype="multipart/form-data">
-            <label>Vælg billede eller video:</label>
-            <input type="file" name="medie_fil" accept="image/*,video/*" required>
+        <h2>
+            ☁️ Upload nyt medie
+        </h2>
 
-            <label>Udløbsdato (valgfri):</label>
-            <input type="date" name="udloeb_dato">
 
-            <button class="blue" type="submit">Upload og aktiver</button>
+        <form
+            action="{{ url_for('admin.admin') }}"
+            method="POST"
+            enctype="multipart/form-data"
+        >
+
+            <label>
+                Vælg billede eller video:
+            </label>
+
+
+            <input
+                type="file"
+                name="medie_fil"
+                accept="image/*,video/*"
+                required
+            >
+
+
+            <label>
+                Startdato (valgfri):
+            </label>
+
+
+            <input
+                type="date"
+                name="start_dato"
+            >
+
+
+            <label>
+                Udløbsdato (valgfri):
+            </label>
+
+
+            <input
+                type="date"
+                name="udloeb_dato"
+            >
+
+
+            <button
+                class="blue"
+                type="submit"
+            >
+                Upload og aktiver
+            </button>
+
         </form>
+
     </div>
 
-    <!-- LOKAL NYHED -->
-    <div class="card">
-        <h2>📰 Tilføj rullende nyhed</h2>
 
-        <form action="{{ url_for('admin.admin') }}" method="POST">
-            <label>Skriv nyhedsbesked:</label>
+
+    <!-- LOKAL NYHED -->
+
+    <div class="card">
+
+        <h2>
+            📰 Tilføj rullende nyhed
+        </h2>
+
+
+        <form
+            action="{{ url_for('admin.admin') }}"
+            method="POST"
+        >
+
+            <label>
+                Skriv nyhedsbesked:
+            </label>
+
+
             <input
                 type="text"
                 name="nyhed_tekst"
@@ -267,16 +561,38 @@
                 required
             >
 
-            <button class="green" type="submit">Tilføj til ticker</button>
+
+            <button
+                class="green"
+                type="submit"
+            >
+                Tilføj til ticker
+            </button>
+
         </form>
+
     </div>
 
-    <!-- SLIDESHOW -->
-    <div class="card">
-        <h2>🖼️ Slideshow hastighed</h2>
 
-        <form action="{{ url_for('admin.admin') }}" method="POST">
-            <label>Visningstid for billeder (sekunder):</label>
+
+    <!-- SLIDESHOW -->
+
+    <div class="card">
+
+        <h2>
+            🖼️ Slideshow hastighed
+        </h2>
+
+
+        <form
+            action="{{ url_for('admin.admin') }}"
+            method="POST"
+        >
+
+            <label>
+                Visningstid for billeder (sekunder):
+            </label>
+
 
             <input
                 type="number"
@@ -287,16 +603,38 @@
                 required
             >
 
-            <button class="gray" type="submit">Gem hastighed</button>
+
+            <button
+                class="gray"
+                type="submit"
+            >
+                Gem hastighed
+            </button>
+
         </form>
+
     </div>
 
-    <!-- TICKER -->
-    <div class="card">
-        <h2>⏱️ Nyhedsbjælke hastighed</h2>
 
-        <form action="{{ url_for('admin.admin') }}" method="POST">
-            <label>Animationstid (sekunder):</label>
+
+    <!-- TICKER -->
+
+    <div class="card">
+
+        <h2>
+            ⏱️ Nyhedsbjælke hastighed
+        </h2>
+
+
+        <form
+            action="{{ url_for('admin.admin') }}"
+            method="POST"
+        >
+
+            <label>
+                Animationstid (sekunder):
+            </label>
+
 
             <input
                 type="number"
@@ -307,38 +645,90 @@
                 required
             >
 
-            <button class="green" type="submit">Gem ticker-hastighed</button>
+
+            <button
+                class="green"
+                type="submit"
+            >
+                Gem ticker-hastighed
+            </button>
+
         </form>
+
     </div>
+
+
 
     <!-- VEJR -->
-    <div class="card">
-        <h2>☁️ Vejr-lokation</h2>
 
-        <form action="{{ url_for('admin.admin') }}" method="POST">
-            <label>Vælg by:</label>
+    <div class="card">
+
+        <h2>
+            ☁️ Vejr-lokation
+        </h2>
+
+
+        <form
+            action="{{ url_for('admin.admin') }}"
+            method="POST"
+        >
+
+            <label>
+                Vælg by:
+            </label>
+
 
             <select name="valgt_by">
+
                 {% for by in byer %}
+
                     <option
                         value="{{ by }}"
-                        {% if by == nuvaerende_by %}selected{% endif %}
+                        {% if by == nuvaerende_by %}
+                            selected
+                        {% endif %}
                     >
+
                         {{ by }}
+
                     </option>
+
                 {% endfor %}
+
             </select>
 
-            <button class="cyan" type="submit">Opdater by</button>
+
+            <button
+                class="cyan"
+                type="submit"
+            >
+                Opdater by
+            </button>
+
         </form>
+
     </div>
 
-    <!-- DR -->
-    <div class="card">
-        <h2>📰 Nyheder (DR)</h2>
 
-        <form action="{{ url_for('admin.admin') }}" method="POST">
-            <label>Opdateringsinterval (sekunder):</label>
+
+    <!-- DR NYHEDER -->
+
+    <div class="card">
+
+        <h2>
+            📰 Nyheder (DR)
+        </h2>
+
+
+        <form
+            action="{{ url_for('admin.admin') }}"
+            method="POST"
+        >
+
+            <label>
+                Opdateringsinterval (sekunder):
+            </label>
+
 
             <input
                 type="number"
@@ -349,7 +739,11 @@
                 required
             >
 
-            <label>Antal nyheder der vises:</label>
+
+            <label>
+                Antal nyheder der vises:
+            </label>
+
 
             <input
                 type="number"
@@ -360,58 +754,120 @@
                 required
             >
 
-            <button class="purple" type="submit">
+
+            <button
+                class="purple"
+                type="submit"
+            >
                 Gem nyhedsindstillinger
             </button>
+
         </form>
 
+
         <div class="hint">
-            DR-nyheder hentes automatisk med det valgte interval.
+
+            DR-nyheder hentes automatisk
+            med det valgte interval.
+
         </div>
+
     </div>
+
 
 </div>
 
+
+
 <!-- LAGERPLADS -->
+
 <div class="card storage">
-    <h2>💾 Lagerplads</h2>
+
+    <h2>
+        💾 Lagerplads
+    </h2>
+
 
     <div class="storage-title">
+
         {{ disk_free_gb }} GB ledig
+
     </div>
 
+
     <div class="progress">
+
         <div
             class="progress-bar"
             style="width: {{ disk_used_percent }}%;"
         ></div>
+
     </div>
 
+
     <div class="storage-info">
-        {{ disk_used_gb }} GB brugt af {{ disk_total_gb }} GB
-        • {{ disk_used_percent }}% af disken er brugt.
+
+        {{ disk_used_gb }} GB brugt
+        af {{ disk_total_gb }} GB
+
+        • {{ disk_used_percent }}%
+        af disken er brugt.
+
     </div>
+
 </div>
+
+
+
+<!-- CONTENT -->
 
 <div class="content-grid">
 
-    <!-- NYHEDER -->
+
+    <!-- LOKALE NYHEDER -->
+
     <div class="card">
-        <h2>📰 Rullende nyheder (lokale)</h2>
+
+        <h2>
+            📰 Rullende nyheder (lokale)
+        </h2>
+
 
         <div class="table-wrap">
+
             <table>
+
                 <tr>
+
                     <th>#</th>
-                    <th>Tekstbesked</th>
-                    <th>Handling</th>
+
+                    <th>
+                        Tekstbesked
+                    </th>
+
+                    <th>
+                        Handling
+                    </th>
+
                 </tr>
 
+
                 {% for nyhed in nyheder %}
+
                 <tr>
-                    <td>{{ loop.index }}</td>
-                    <td>{{ nyhed.tekst }}</td>
+
                     <td>
+                        {{ loop.index }}
+                    </td>
+
+
+                    <td>
+                        {{ nyhed.tekst }}
+                    </td>
+
+
+                    <td>
+
                         <a
                             class="delete"
                             href="{{ url_for('admin.slet_nyhed', id=nyhed.id) }}"
@@ -419,132 +875,333 @@
                         >
                             Slet
                         </a>
+
                     </td>
+
                 </tr>
+
+
                 {% else %}
+
                 <tr>
-                    <td colspan="3">Ingen lokale nyheder.</td>
+
+                    <td colspan="3">
+
+                        Ingen lokale nyheder.
+
+                    </td>
+
                 </tr>
+
                 {% endfor %}
+
             </table>
+
         </div>
+
     </div>
 
+
+
     <!-- MEDIER -->
+
     <div class="card">
-        <h2>🖼️ Nuværende medier</h2>
+
+        <h2>
+            🖼️ Nuværende medier
+        </h2>
+
 
         <div class="table-wrap">
+
             <table>
-                <tr>
-                    <th>Preview</th>
-                    <th>Filnavn</th>
-                    <th>Status</th>
-                    <th>Udløbsdato</th>
-                    <th>Vis</th>
-                    <th>Handling</th>
-                </tr>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Preview
+                        </th>
+
+                        <th>
+                            Filnavn
+                        </th>
+
+                        <th>
+                            Status
+                        </th>
+
+                        <th>
+                            Startdato
+                        </th>
+
+                        <th>
+                            Slutdato
+                        </th>
+
+                        <th>
+                            Gem
+                        </th>
+
+                        <th>
+                            Vis
+                        </th>
+
+                        <th>
+                            Handling
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
 
                 {% for medie in medier %}
+
                 <tr>
 
+
+                    <!-- PREVIEW -->
+
                     <td>
+
                         {% if medie.filnavn.lower().endswith(('.mp4', '.webm', '.mov')) %}
+
                             <video
                                 src="{{ url_for('admin.uploaded_file', filename=medie.filnavn) }}"
                                 class="preview"
                                 muted
+                                autoplay
+                                loop
+                                playsinline
                             ></video>
+
                         {% else %}
+
                             <img
                                 src="{{ url_for('admin.uploaded_file', filename=medie.filnavn) }}"
                                 class="preview"
-                                alt="Preview"
+                                alt="{{ medie.filnavn }}"
                             >
+
                         {% endif %}
+
                     </td>
 
-                    <td>{{ medie.filnavn }}</td>
+
+
+                    <!-- FILNAVN -->
 
                     <td>
+
+                        {{ medie.filnavn }}
+
+                    </td>
+
+
+
+                    <!-- STATUS -->
+
+                    <td>
+
                         {% if medie.aktiv == 1 %}
-                            <span class="active">Aktiv</span>
+
+                            <span class="active">
+                                Aktiv
+                            </span>
+
                         {% else %}
-                            <span class="inactive">Deaktiveret</span>
+
+                            <span class="inactive">
+                                Inaktiv
+                            </span>
+
                         {% endif %}
+
                     </td>
 
-                    <td>
-                        {% if medie.udloebs_dato %}
-                            {{ medie.udloebs_dato }}
-                        {% else %}
-                            <span class="expiry">(udløber aldrig)</span>
-                        {% endif %}
-                    </td>
+
+
+                    <!-- STARTDATO -->
 
                     <td>
+
+                        <input
+                            type="date"
+                            name="start_dato"
+                            value="{{ medie.start_dato or '' }}"
+                            form="dateform{{ medie.id }}"
+                        >
+
+                    </td>
+
+
+
+                    <!-- UDLØBSDATO -->
+
+                    <td>
+
+                        <input
+                            type="date"
+                            name="udloebs_dato"
+                            value="{{ medie.udloebs_dato or '' }}"
+                            form="dateform{{ medie.id }}"
+                        >
+
+                    </td>
+
+
+
+                    <!-- GEM DATOER -->
+
+                    <td>
+
+                        <form
+                            id="dateform{{ medie.id }}"
+                            action="{{ url_for('admin.aendre_datoer', id=medie.id) }}"
+                            method="POST"
+                        >
+
+                            <button
+                                type="submit"
+                                class="save-button"
+                            >
+                                Gem
+                            </button>
+
+                        </form>
+
+                    </td>
+
+
+
+                    <!-- AKTIV / INAKTIV -->
+
+                    <td>
+
                         <input
                             class="switch"
                             type="checkbox"
                             data-id="{{ medie.id }}"
-                            {% if medie.aktiv == 1 %}checked{% endif %}
+                            {% if medie.aktiv == 1 %}
+                                checked
+                            {% endif %}
                             onchange="opdaterStatus(this)"
                         >
+
                     </td>
 
+
+
+                    <!-- SLET -->
+
                     <td>
+
                         <a
                             class="delete"
                             href="{{ url_for('admin.slet', id=medie.id) }}"
-                            onclick="return confirm('Vil du slette filen helt?')"
+                            onclick="return confirm('Vil du slette filen {{ medie.filnavn }}?')"
                         >
                             Slet
                         </a>
+
+                    </td>
+
+
+                </tr>
+
+
+                {% else %}
+
+                <tr>
+
+                    <td colspan="8">
+
+                        Ingen medier uploadet.
+
                     </td>
 
                 </tr>
-                {% else %}
-                <tr>
-                    <td colspan="6">Ingen medier uploadet.</td>
-                </tr>
+
                 {% endfor %}
+
+
+                </tbody>
+
             </table>
+
         </div>
+
     </div>
+
 
 </div>
 
+
+
+<!-- STATUS JAVASCRIPT -->
+
 <script>
+
 async function opdaterStatus(checkbox) {
+
     const id = checkbox.dataset.id;
 
+
     try {
+
         const response = await fetch(
             `/skift-status/${id}`,
             {
                 method: "POST",
+
                 headers: {
                     "Content-Type": "application/json"
                 },
+
                 body: JSON.stringify({
                     aktiv: checkbox.checked
                 })
             }
         );
 
+
         if (!response.ok) {
-            throw new Error("Kunne ikke ændre status");
+
+            throw new Error(
+                "Kunne ikke ændre status"
+            );
+
         }
+
 
         location.reload();
 
+
     } catch (error) {
+
         console.error(error);
-        checkbox.checked = !checkbox.checked;
-        alert("Kunne ikke ændre mediestatus.");
+
+
+        checkbox.checked =
+            !checkbox.checked;
+
+
+        alert(
+            "Kunne ikke ændre mediestatus."
+        );
+
     }
+
 }
+
 </script>
 
+
 </body>
+
 </html>

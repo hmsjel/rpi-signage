@@ -21,9 +21,11 @@ def init_db():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 filnavn TEXT NOT NULL,
                 aktiv INTEGER NOT NULL DEFAULT 1,
+                start_dato TEXT,
                 udloebs_dato TEXT
             )
         """)
+
 
         columns = conn.execute(
             "PRAGMA table_info(medier)"
@@ -33,6 +35,13 @@ def init_db():
             column["name"]
             for column in columns
         ]
+
+        if "start_dato" not in column_names:
+
+            conn.execute("""
+                ALTER TABLE medier
+                ADD COLUMN start_dato TEXT
+            """)
 
         if "udloebs_dato" not in column_names:
 
